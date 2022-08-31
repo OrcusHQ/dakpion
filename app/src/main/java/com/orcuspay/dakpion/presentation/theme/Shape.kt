@@ -1,4 +1,4 @@
-package com.orcuspay.dakpion.ui.theme
+package com.orcuspay.dakpion.presentation.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Shapes

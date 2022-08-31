@@ -10,8 +10,8 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.orcuspay.dakpion.ui.screens.NavGraphs
-import com.orcuspay.dakpion.ui.theme.DakpionTheme
+import com.orcuspay.dakpion.presentation.screens.NavGraphs
+import com.orcuspay.dakpion.presentation.theme.DakpionTheme
 import com.ramcosta.composedestinations.DestinationsNavHost
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
