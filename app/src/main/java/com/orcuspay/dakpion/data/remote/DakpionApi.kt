@@ -14,7 +14,7 @@ interface DakpionApi {
     suspend fun verify(@Body verifyRequestDto: VerifyRequestDto): Result<VerifyResponseDto>
 
     @POST("dak-pion")
-    suspend fun send(@Body sendMessageRequestDto: SendMessageRequestDto): Response<Unit>
+    suspend fun send(@Body sendMessageRequestDto: SendMessageRequestDto): Result<Unit>
 
     companion object {
         const val BASE_URL = "https://stage.dashboard.orcuspay.com/api/"
