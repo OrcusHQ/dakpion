@@ -24,8 +24,8 @@ class HomeViewModel @Inject constructor(
             state = state.copy(loading = true)
             dakpionRepository.verify(
                 VerifyRequest(
-                    accessKey = "string",
-                    secretKey = "string",
+                    accessKey = "",
+                    secretKey = "",
                     mode = "test"
                 )
             )

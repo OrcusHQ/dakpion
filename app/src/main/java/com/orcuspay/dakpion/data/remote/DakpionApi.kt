@@ -11,7 +11,7 @@ import retrofit2.http.POST
 interface DakpionApi {
 
     @POST("dak-pion/verify")
-    suspend fun verify(@Body verifyRequestDto: VerifyRequestDto): Response<VerifyResponseDto>
+    suspend fun verify(@Body verifyRequestDto: VerifyRequestDto): Result<VerifyResponseDto>
 
     @POST("dak-pion")
     suspend fun send(@Body sendMessageRequestDto: SendMessageRequestDto): Response<Unit>

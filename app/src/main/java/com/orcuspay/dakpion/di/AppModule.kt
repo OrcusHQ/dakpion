@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import com.orcuspay.dakpion.data.local.DakpionDatabase
 import com.orcuspay.dakpion.data.remote.DakpionApi
+import com.orcuspay.dakpion.data.remote.retrofit.NetworkResponseAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,6 +30,7 @@ object AppModule {
         val okHttpClient = OkHttpClient.Builder().build()
         return Retrofit.Builder()
             .baseUrl(DakpionApi.BASE_URL)
+            .addCallAdapterFactory(NetworkResponseAdapterFactory())
             .addConverterFactory(MoshiConverterFactory.create())
             .client(okHttpClient)
             .build()
