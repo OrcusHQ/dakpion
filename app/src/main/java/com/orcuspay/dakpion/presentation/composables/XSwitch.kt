@@ -1,5 +1,6 @@
 package com.orcuspay.dakpion.presentation.composables
 
+import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,8 +45,10 @@ fun XSwitch(
     val width = 50.dp
     val thumbSize = 30.dp
     val maxThumbOffset = with(LocalDensity.current) { 20.dp.toPx() }
-    val offsetX = remember { mutableStateOf(if (value) maxThumbOffset else 0f) }
-
+    val offsetX = remember(value) {
+        Log.d("kraken", "calculated")
+        mutableStateOf(if (value) maxThumbOffset else 0f)
+    }
 
     val animateOffsetX = animateAlignmentAsState(targetBiasValue = offsetX.value)
 

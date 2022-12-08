@@ -67,7 +67,6 @@ fun HomeScreen(
             checked = checkedState.value
         ) {
             checkedState.value = it
-            Log.d("kraken", it.toString())
         }
     }
 }
