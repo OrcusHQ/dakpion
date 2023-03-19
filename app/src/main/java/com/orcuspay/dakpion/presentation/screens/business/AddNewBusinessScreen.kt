@@ -117,12 +117,7 @@ fun AddNewBusinessScreen(
                         fontSize = 18.sp,
                         fontFamily = interFontFamily,
                         color = Color.White,
-                        modifier = Modifier.padding(
-                            start = 16.dp,
-                            end = 16.dp,
-                            top = 20.dp,
-                            bottom = 16.dp
-                        )
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
                 Gap(height = 24.dp)
