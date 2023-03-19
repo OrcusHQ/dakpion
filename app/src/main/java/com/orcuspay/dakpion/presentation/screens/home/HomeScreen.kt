@@ -1,5 +1,6 @@
 package com.orcuspay.dakpion.presentation.screens.home
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
@@ -45,7 +46,6 @@ fun HomeScreen(
     navigator: DestinationsNavigator,
 ) {
 
-    val checkedState = remember { mutableStateOf(true) }
     val credentials by viewModel.getCredentials().observeAsState(initial = listOf())
     val scope = rememberCoroutineScope()
 
@@ -99,6 +99,7 @@ fun HomeScreen(
                 ) {
                     viewModel.deleteCredential(credentialToDelete!!)
                     credentialToDelete = null
+                    onDismissCallback()
                 }
             }
         }
@@ -123,6 +124,7 @@ fun HomeScreen(
                         if (
                             dismissState.isDismissed(DismissDirection.EndToStart) && !dismissing
                         ) {
+                            Log.d("kraken", "here")
                             credentialToDelete = credential
                             onDismissCallback = {
                                 scope.launch {
@@ -244,7 +246,8 @@ fun ConfirmDialog(
 ) {
     Card(
         shape = RoundedCornerShape(10.dp),
-        elevation = 8.dp
+        elevation = 8.dp,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
     ) {
         Column(
             modifier
