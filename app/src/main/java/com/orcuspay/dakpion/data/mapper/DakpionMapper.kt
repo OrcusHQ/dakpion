@@ -4,23 +4,20 @@ import com.orcuspay.dakpion.data.local.CredentialEntity
 import com.orcuspay.dakpion.data.remote.dto.request.SendMessageRequestDto
 import com.orcuspay.dakpion.data.remote.dto.request.VerifyRequestDto
 import com.orcuspay.dakpion.data.remote.dto.response.VerifyResponseDto
-import com.orcuspay.dakpion.domain.model.Credential
-import com.orcuspay.dakpion.domain.model.SendMessageRequest
-import com.orcuspay.dakpion.domain.model.VerifyRequest
-import com.orcuspay.dakpion.domain.model.VerifyResponse
+import com.orcuspay.dakpion.domain.model.*
 
 fun VerifyRequest.toVerifyRequestDto(): VerifyRequestDto {
     return VerifyRequestDto(
         accessKey = accessKey,
         secretKey = secretKey,
-        mode = mode
+        mode = if (mode == Mode.LIVE) "prod" else "test"
     )
 }
 
 fun VerifyResponseDto.toVerifyResponse(): VerifyResponse {
     return VerifyResponse(
         id = business.id,
-        mode = mode,
+        mode = if (mode == "prod") Mode.LIVE else Mode.TEST,
         name = business.name,
         userId = business.userId
     )
@@ -30,7 +27,7 @@ fun SendMessageRequest.toSendMessageRequestDto(): SendMessageRequestDto {
     return SendMessageRequestDto(
         accessKey = accessKey,
         secretKey = secretKey,
-        mode = mode,
+        mode = if (mode == Mode.LIVE) "prod" else "test",
         senderId = senderId,
         body = body
     )
@@ -43,7 +40,8 @@ fun CredentialEntity.toCredential(): Credential {
         secretKey = secretKey,
         mode = mode,
         credentialId = credentialId,
-        businessName = businessName
+        businessName = businessName,
+        enabled = enabled
     )
 }
 
@@ -54,6 +52,7 @@ fun Credential.toCredentialEntity(): CredentialEntity {
         secretKey = secretKey,
         mode = mode,
         credentialId = credentialId,
-        businessName = businessName
+        businessName = businessName,
+        enabled = enabled
     )
 }

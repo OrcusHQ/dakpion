@@ -21,8 +21,7 @@ import com.orcuspay.dakpion.util.ifTrue
 @Composable
 fun CredentialCard(
     credential: Credential,
-    checked: Boolean,
-    onCheckedChange: (value: Boolean) -> Unit,
+    onEnabledChange: (value: Boolean) -> Unit,
 ) {
 
     Row(
@@ -66,12 +65,12 @@ fun CredentialCard(
                 fontWeight = FontWeight.Normal,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth(0.5f)
+                modifier = Modifier.fillMaxWidth(0.75f)
             )
         }
         XSwitch(
-            value = checked,
-            onValueChange = onCheckedChange,
+            value = credential.enabled,
+            onValueChange = onEnabledChange,
             modifier = Modifier.padding(end = 16.dp)
         )
     }

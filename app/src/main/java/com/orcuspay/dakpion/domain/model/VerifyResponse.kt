@@ -2,7 +2,7 @@ package com.orcuspay.dakpion.domain.model
 
 data class VerifyResponse(
     val id: String,
-    val mode: String,
+    val mode: Mode,
     val name: String,
     val userId: String
 )

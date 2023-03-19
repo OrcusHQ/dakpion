@@ -2,9 +2,11 @@ package com.orcuspay.dakpion.data.repository
 
 import android.util.Log
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.Transformations
+import com.orcuspay.dakpion.data.exception.InternalServerException
+import com.orcuspay.dakpion.data.local.CredentialEntity
 import com.orcuspay.dakpion.data.local.DakpionDatabase
-import com.orcuspay.dakpion.data.mapper.toSendMessageRequestDto
-import com.orcuspay.dakpion.data.mapper.toVerifyRequestDto
+import com.orcuspay.dakpion.data.mapper.*
 import com.orcuspay.dakpion.data.remote.ApiResult
 import com.orcuspay.dakpion.data.remote.DakpionApi
 import com.orcuspay.dakpion.domain.model.Credential
@@ -26,22 +28,28 @@ class DakpionRepositoryImp @Inject constructor(
     override suspend fun verify(verifyRequest: VerifyRequest): ApiResult<VerifyResponse> {
 
         val result = api.verify(verifyRequest.toVerifyRequestDto())
-        if (result.isSuccess) {
-            Log.d("kraken", "success!")
+
+        return if (result.isSuccess) {
             val response = result.getOrNull()
-            if (response == null) {
-                Log.d("kraken", "null")
+            val verifyResponse = response?.toVerifyResponse()
+            if (verifyResponse != null) {
+                dao.createCredential(
+                    CredentialEntity(
+                        accessKey = verifyRequest.accessKey,
+                        secretKey = verifyRequest.secretKey,
+                        mode = verifyRequest.mode,
+                        credentialId = verifyResponse.id,
+                        businessName = verifyResponse.name,
+                        enabled = true,
+                    )
+                )
+                ApiResult.Success(data = response.toVerifyResponse())
             } else {
-                Log.d("kraken", "not null")
-                Log.d("kraken", response.toString())
+                ApiResult.Error(message = InternalServerException().message)
             }
         } else {
-            Log.d("kraken", "failure")
-            Log.d("kraken", result.exceptionOrNull().toString())
+            ApiResult.Error(message = result.exceptionOrNull()?.message)
         }
-
-
-        return ApiResult.Success(data = null)
     }
 
     override suspend fun send(sendMessageRequest: SendMessageRequest): ApiResult<Unit> {
@@ -63,7 +71,19 @@ class DakpionRepositoryImp @Inject constructor(
         return ApiResult.Success(data = null)
     }
 
-    override suspend fun getCredentials(): LiveData<List<Credential>> {
-        TODO("Not yet implemented")
+    override fun getCredentials(): LiveData<List<Credential>> {
+        return Transformations.map(dao.getCredentials()) {
+            it.map { ce ->
+                ce.toCredential()
+            }
+        }
+    }
+
+    override suspend fun deleteCredential(credential: Credential) {
+        dao.deleteCredential(credential.toCredentialEntity())
+    }
+
+    override suspend fun setCredentialEnabled(credential: Credential, enabled: Boolean) {
+        dao.updateCredential(credential.copy(enabled = enabled).toCredentialEntity())
     }
 }

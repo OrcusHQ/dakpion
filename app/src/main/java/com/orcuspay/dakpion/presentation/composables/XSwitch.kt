@@ -46,7 +46,7 @@ fun XSwitch(
     val thumbSize = 30.dp
     val maxThumbOffset = with(LocalDensity.current) { 20.dp.toPx() }
     val offsetX = remember(value) {
-        Log.d("kraken", "calculated")
+//        Log.d("kraken", "calculated")
         mutableStateOf(if (value) maxThumbOffset else 0f)
     }
 

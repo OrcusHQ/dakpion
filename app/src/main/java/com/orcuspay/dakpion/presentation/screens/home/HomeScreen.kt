@@ -1,6 +1,5 @@
 package com.orcuspay.dakpion.presentation.screens.home
 
-import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
@@ -11,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -25,25 +25,28 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.orcuspay.dakpion.R
+import com.orcuspay.dakpion.domain.model.Credential
 import com.orcuspay.dakpion.presentation.composables.CredentialCard
 import com.orcuspay.dakpion.presentation.composables.Gap
 import com.orcuspay.dakpion.presentation.composables.TopBar
+import com.orcuspay.dakpion.presentation.destinations.AddNewBusinessScreenDestination
 import com.orcuspay.dakpion.presentation.theme.epilogueFontFamily
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Destination
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    navigator: DestinationsNavigator,
 ) {
 
     val checkedState = remember { mutableStateOf(true) }
-    val credentials = viewModel.credentials
+    val credentials by viewModel.getCredentials().observeAsState(initial = listOf())
     val scope = rememberCoroutineScope()
 
     Scaffold(
@@ -53,7 +56,9 @@ fun HomeScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /*TODO*/ },
+                onClick = {
+                    navigator.navigate(AddNewBusinessScreenDestination)
+                },
                 shape = CircleShape,
                 backgroundColor = MaterialTheme.colors.primaryVariant,
                 modifier = Modifier
@@ -68,7 +73,7 @@ fun HomeScreen(
         },
         floatingActionButtonPosition = FabPosition.Center,
     ) { pv ->
-        var credentialToDelete by remember { mutableStateOf(-1) }
+        var credentialToDelete: Credential? by remember { mutableStateOf(null) }
         var dismissing by remember {
             mutableStateOf(false)
         }
@@ -76,10 +81,10 @@ fun HomeScreen(
             mutableStateOf({})
         }
 
-        if (credentialToDelete != -1) {
+        if (credentialToDelete != null) {
             Dialog(
                 onDismissRequest = {
-                    credentialToDelete = -1
+                    credentialToDelete = null
                     onDismissCallback()
                 },
                 properties = DialogProperties(
@@ -88,12 +93,12 @@ fun HomeScreen(
             ) {
                 ConfirmDialog(
                     onCancel = {
-                        credentialToDelete = -1
+                        credentialToDelete = null
                         onDismissCallback()
                     }
                 ) {
-                    credentials.removeAt(credentialToDelete)
-                    credentialToDelete = -1
+                    viewModel.deleteCredential(credentialToDelete!!)
+                    credentialToDelete = null
                 }
             }
         }
@@ -118,11 +123,9 @@ fun HomeScreen(
                         if (
                             dismissState.isDismissed(DismissDirection.EndToStart) && !dismissing
                         ) {
-                            Log.d("kraken", "why")
-                            credentialToDelete = i
+                            credentialToDelete = credential
                             onDismissCallback = {
                                 scope.launch {
-                                    Log.d("kraken", "here")
                                     dismissing = true
                                     dismissState.reset()
                                     dismissing = false
@@ -181,15 +184,13 @@ fun HomeScreen(
                                             tint = Color.White
                                         )
                                     }
-
                                 }
                             },
                         ) {
                             CredentialCard(
                                 credential = credential,
-                                checked = checkedState.value
                             ) {
-                                checkedState.value = it
+                                viewModel.setCredentialEnabled(credential, it)
                             }
                         }
                     }

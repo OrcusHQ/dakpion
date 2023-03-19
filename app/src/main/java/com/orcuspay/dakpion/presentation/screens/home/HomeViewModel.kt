@@ -1,15 +1,14 @@
 package com.orcuspay.dakpion.presentation.screens.home
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.orcuspay.dakpion.domain.model.Credential
 import com.orcuspay.dakpion.domain.model.Mode
 import com.orcuspay.dakpion.domain.model.SendMessageRequest
-import com.orcuspay.dakpion.domain.model.VerifyRequest
 import com.orcuspay.dakpion.domain.repository.DakpionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -22,53 +21,23 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
 
     var state by mutableStateOf(HomeState())
-    val credentials = mutableStateListOf<Credential>()
 
-    init {
-        credentials.addAll(
-            listOf(
-                Credential(
-                    id = 1,
-                    accessKey = "ak_prod_WzUxXV57wSkV57wSV57wSV57wSV57wS",
-                    secretKey = "test",
-                    mode = Mode.LIVE,
-                    credentialId = "credentialId",
-                    businessName = "Zanventtttttahahahahahabababa"
-                ),
-                Credential(
-                    id = 2,
-                    accessKey = "ak_prod_WzUxXV57wSkV57wSV57wSV57wSV57wS",
-                    secretKey = "test",
-                    mode = Mode.TEST,
-                    credentialId = "credentialId",
-                    businessName = "Zanventtttttahah"
-                ),
-                Credential(
-                    id = 3,
-                    accessKey = "ak_prod_WzUxXV57wSkV57wSV57wSV57wSV57wS",
-                    secretKey = "test",
-                    mode = Mode.LIVE,
-                    credentialId = "credentialId",
-                    businessName = "Zanvent"
-                )
-            )
-        )
-//        credentials.clear()
+    fun getCredentials(): LiveData<List<Credential>> {
+        return dakpionRepository.getCredentials()
     }
 
-    fun testVerify() {
+    fun deleteCredential(credential: Credential) {
         viewModelScope.launch {
-            state = state.copy(loading = true)
-            dakpionRepository.verify(
-                VerifyRequest(
-                    accessKey = "",
-                    secretKey = "",
-                    mode = "test"
-                )
-            )
-            state = state.copy(loading = false)
+            dakpionRepository.deleteCredential(credential)
         }
     }
+
+    fun setCredentialEnabled(credential: Credential, enabled: Boolean) {
+        viewModelScope.launch {
+            dakpionRepository.setCredentialEnabled(credential, enabled)
+        }
+    }
+
 
     fun testSend() {
         viewModelScope.launch {
@@ -77,7 +46,7 @@ class HomeViewModel @Inject constructor(
                 SendMessageRequest(
                     accessKey = "test",
                     secretKey = "test",
-                    mode = "test",
+                    mode = Mode.TEST,
                     senderId = "bKash",
                     body = "You have received Tk 1.00 from 01878287735. Fee Tk 0.00. Balance Tk 1.62. TrxID 9H7396WNSF at 07/08/2022 06:05"
                 )

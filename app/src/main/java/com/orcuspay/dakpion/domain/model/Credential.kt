@@ -12,4 +12,5 @@ data class Credential(
     val mode: Mode,
     val credentialId: String,
     val businessName: String,
+    val enabled: Boolean,
 )

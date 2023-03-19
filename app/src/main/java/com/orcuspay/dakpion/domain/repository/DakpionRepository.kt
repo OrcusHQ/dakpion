@@ -10,5 +10,7 @@ import com.orcuspay.dakpion.domain.model.VerifyResponse
 interface DakpionRepository {
     suspend fun verify(verifyRequest: VerifyRequest): ApiResult<VerifyResponse>
     suspend fun send(sendMessageRequest: SendMessageRequest): ApiResult<Unit>
-    suspend fun getCredentials(): LiveData<List<Credential>>
+    fun getCredentials(): LiveData<List<Credential>>
+    suspend fun deleteCredential(credential: Credential)
+    suspend fun setCredentialEnabled(credential: Credential, enabled: Boolean)
 }
