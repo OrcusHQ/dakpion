@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.orcuspay.dakpion.presentation.theme.epilogueFontFamily
+import com.orcuspay.dakpion.util.ifTrue
 
 @Composable
 fun XButton(
@@ -26,13 +27,10 @@ fun XButton(
     onClick: () -> Unit = {}
 ) {
 
-    var m = modifier
-
-    if (fillMaxWidth)
-        m = m.fillMaxWidth()
-
     Button(
-        modifier = m,
+        modifier = modifier.ifTrue(fillMaxWidth) {
+            Modifier.fillMaxWidth()
+        },
         onClick = onClick,
         enabled = enabled,
         shape = RoundedCornerShape(8.dp),

@@ -46,3 +46,14 @@ fun CredentialEntity.toCredential(): Credential {
         businessName = businessName
     )
 }
+
+fun Credential.toCredentialEntity(): CredentialEntity {
+    return CredentialEntity(
+        id = id,
+        accessKey = accessKey,
+        secretKey = secretKey,
+        mode = mode,
+        credentialId = credentialId,
+        businessName = businessName
+    )
+}

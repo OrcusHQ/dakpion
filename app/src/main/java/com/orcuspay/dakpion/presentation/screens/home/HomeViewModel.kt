@@ -1,10 +1,13 @@
-package com.orcuspay.dakpion.presentation.screens
+package com.orcuspay.dakpion.presentation.screens.home
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.orcuspay.dakpion.domain.model.Credential
+import com.orcuspay.dakpion.domain.model.Mode
 import com.orcuspay.dakpion.domain.model.SendMessageRequest
 import com.orcuspay.dakpion.domain.model.VerifyRequest
 import com.orcuspay.dakpion.domain.repository.DakpionRepository
@@ -19,6 +22,39 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
 
     var state by mutableStateOf(HomeState())
+    val credentials = mutableStateListOf<Credential>()
+
+    init {
+        credentials.addAll(
+            listOf(
+                Credential(
+                    id = 1,
+                    accessKey = "ak_prod_WzUxXV57wSkV57wSV57wSV57wSV57wS",
+                    secretKey = "test",
+                    mode = Mode.LIVE,
+                    credentialId = "credentialId",
+                    businessName = "Zanventtttttahahahahahabababa"
+                ),
+                Credential(
+                    id = 2,
+                    accessKey = "ak_prod_WzUxXV57wSkV57wSV57wSV57wSV57wS",
+                    secretKey = "test",
+                    mode = Mode.TEST,
+                    credentialId = "credentialId",
+                    businessName = "Zanventtttttahah"
+                ),
+                Credential(
+                    id = 3,
+                    accessKey = "ak_prod_WzUxXV57wSkV57wSV57wSV57wSV57wS",
+                    secretKey = "test",
+                    mode = Mode.LIVE,
+                    credentialId = "credentialId",
+                    businessName = "Zanvent"
+                )
+            )
+        )
+//        credentials.clear()
+    }
 
     fun testVerify() {
         viewModelScope.launch {
