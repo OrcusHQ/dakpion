@@ -1,6 +1,7 @@
 package com.orcuspay.dakpion
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +29,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             DakpionTheme {
                 // A surface container using the 'background' color from the theme
+                Log.d("kraken", "main activity")
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background

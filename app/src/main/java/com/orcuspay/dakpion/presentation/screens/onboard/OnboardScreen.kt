@@ -1,5 +1,6 @@
 package com.orcuspay.dakpion.presentation.screens.onboard
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
@@ -28,17 +29,14 @@ import com.ramcosta.composedestinations.navigation.popUpTo
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 @Destination
-@RootNavGraph(start = true)
 fun OnboardScreen(
     navigator: DestinationsNavigator
 ) {
 
     val smsPermissionState = rememberPermissionState(
         android.Manifest.permission.READ_SMS
-    )
-
-    if (smsPermissionState.status.isGranted) {
-        LaunchedEffect(Unit) {
+    ) {
+        if (it) {
             navigator.navigate(HomeScreenDestination) {
                 popUpTo(OnboardScreenDestination) {
                     inclusive = true

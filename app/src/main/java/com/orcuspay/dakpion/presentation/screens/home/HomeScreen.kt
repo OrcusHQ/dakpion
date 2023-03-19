@@ -35,7 +35,7 @@ import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Destination
 @Composable
 fun HomeScreen(
