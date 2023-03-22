@@ -302,8 +302,3 @@ fun ConfirmDialog(
         }
     }
 }
-
-//@OptIn(ExperimentalMaterialApi::class)
-//fun DismissState.test() {
-//    currentValue = DismissValue.Default
-//}

@@ -29,7 +29,6 @@ internal class NetworkResponseCall<T>(
                         )
                     } else {
                         val exception = when (code) {
-                            201 -> UnsuccessfulRequestException()
                             400 -> InvalidRequestException()
                             401 -> InvalidCredentialException()
                             409 -> DuplicateRequestException()
@@ -71,7 +70,6 @@ internal class NetworkResponseCall<T>(
             Response.success(Result.success(response.body()))
         } else {
             val exception = when (code) {
-                201 -> UnsuccessfulRequestException()
                 400 -> InvalidRequestException()
                 401 -> InvalidCredentialException()
                 409 -> DuplicateRequestException()

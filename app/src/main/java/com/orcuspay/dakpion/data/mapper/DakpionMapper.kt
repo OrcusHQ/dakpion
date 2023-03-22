@@ -3,6 +3,7 @@ package com.orcuspay.dakpion.data.mapper
 import com.orcuspay.dakpion.data.local.CredentialEntity
 import com.orcuspay.dakpion.data.remote.dto.request.SendMessageRequestDto
 import com.orcuspay.dakpion.data.remote.dto.request.VerifyRequestDto
+import com.orcuspay.dakpion.data.remote.dto.response.SendMessageResponseDto
 import com.orcuspay.dakpion.data.remote.dto.response.VerifyResponseDto
 import com.orcuspay.dakpion.domain.model.*
 
@@ -30,6 +31,12 @@ fun SendMessageRequest.toSendMessageRequestDto(): SendMessageRequestDto {
         mode = if (mode == Mode.LIVE) "prod" else "test",
         senderId = senderId,
         body = body
+    )
+}
+
+fun SendMessageResponseDto.toSendMessageResponse(): SendMessageResponse {
+    return SendMessageResponse(
+        stored = stored
     )
 }
 

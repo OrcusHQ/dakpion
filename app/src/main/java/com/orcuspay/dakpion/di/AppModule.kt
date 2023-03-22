@@ -2,14 +2,17 @@ package com.orcuspay.dakpion.di
 
 import android.app.Application
 import androidx.room.Room
+import com.orcuspay.dakpion.data.local.Converters
 import com.orcuspay.dakpion.data.local.DakpionDatabase
 import com.orcuspay.dakpion.data.remote.DakpionApi
 import com.orcuspay.dakpion.data.remote.retrofit.NetworkResponseAdapterFactory
+import com.orcuspay.dakpion.util.DakpionPreference
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import javax.inject.Singleton
@@ -27,7 +30,12 @@ object AppModule {
     @Provides
     @Singleton
     fun provideStockApi(): DakpionApi {
-        val okHttpClient = OkHttpClient.Builder().build()
+        val okHttpClient = OkHttpClient.Builder().apply {
+            addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
+            })
+        }
+            .build()
         return Retrofit.Builder()
             .baseUrl(DakpionApi.BASE_URL)
             .addCallAdapterFactory(NetworkResponseAdapterFactory())
@@ -45,7 +53,16 @@ object AppModule {
             DakpionDatabase::class.java,
             "dakpion.db"
         )
+            .addTypeConverter(Converters())
             .addMigrations()
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDakpionPreference(
+        app: Application
+    ): DakpionPreference {
+        return DakpionPreference(app.applicationContext)
     }
 }
