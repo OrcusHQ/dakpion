@@ -32,6 +32,7 @@ import com.orcuspay.dakpion.presentation.composables.CredentialCard
 import com.orcuspay.dakpion.presentation.composables.Gap
 import com.orcuspay.dakpion.presentation.composables.TopBar
 import com.orcuspay.dakpion.presentation.destinations.AddNewBusinessScreenDestination
+import com.orcuspay.dakpion.presentation.destinations.SMSLogScreenDestination
 import com.orcuspay.dakpion.presentation.theme.epilogueFontFamily
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
@@ -57,7 +58,8 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    navigator.navigate(AddNewBusinessScreenDestination)
+//                    navigator.navigate(AddNewBusinessScreenDestination)
+                    navigator.navigate(SMSLogScreenDestination)
                 },
                 shape = CircleShape,
                 backgroundColor = MaterialTheme.colors.primaryVariant,

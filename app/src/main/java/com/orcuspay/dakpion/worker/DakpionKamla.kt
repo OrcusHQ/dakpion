@@ -50,6 +50,7 @@ class DakpionKamla @AssistedInject constructor(
                                     it.status == SMSStatus.ERROR) && it.status != SMSStatus.DUPLICATE
                         }
                         .forEach { sms ->
+                            Log.d("kraken", "Sending $sms")
                             val result = dakpionRepository.send(
                                 credential = credential,
                                 sms = sms

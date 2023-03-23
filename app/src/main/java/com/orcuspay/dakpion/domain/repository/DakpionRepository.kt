@@ -12,4 +12,5 @@ interface DakpionRepository {
     suspend fun deleteCredential(credential: Credential)
     suspend fun setCredentialEnabled(credential: Credential, enabled: Boolean)
     suspend fun getCredentialWithSMS(): List<CredentialWithSMS>
+    fun getCredentialWithSMSLiveData(): LiveData<List<CredentialWithSMS>>
 }

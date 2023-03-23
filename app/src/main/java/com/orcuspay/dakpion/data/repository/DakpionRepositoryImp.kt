@@ -65,6 +65,15 @@ class DakpionRepositoryImp @Inject constructor(
             senderId = sms.sender,
             body = sms.body
         )
+
+        if (sms.status != SMSStatus.PROCESSING) {
+            dao.updateSMS(
+                smsEntity = sms.copy(
+                    status = SMSStatus.PROCESSING
+                ).toSMSEntity()
+            )
+        }
+
         val result = api.send(sendMessageRequest.toSendMessageRequestDto())
 
         return if (result.isSuccess) {
@@ -114,6 +123,13 @@ class DakpionRepositoryImp @Inject constructor(
                             ).toSMSEntity()
                         )
                     }
+                    else -> {
+                        dao.updateSMS(
+                            smsEntity = sms.copy(
+                                status = SMSStatus.ERROR
+                            ).toSMSEntity()
+                        )
+                    }
                 }
             }
             ApiResult.Error(
@@ -147,5 +163,13 @@ class DakpionRepositoryImp @Inject constructor(
 
     override suspend fun getCredentialWithSMS(): List<CredentialWithSMS> {
         return dao.getCredentialsWithSMS().map { it.toCredentialWithSMS() }
+    }
+
+    override fun getCredentialWithSMSLiveData(): LiveData<List<CredentialWithSMS>> {
+        return Transformations.map(dao.getCredentialsWithSMSLiveData()) {
+            it.map { csms ->
+                csms.toCredentialWithSMS()
+            }
+        }
     }
 }

@@ -19,6 +19,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.orcuspay.dakpion.R
 import com.orcuspay.dakpion.presentation.composables.Gap
 import com.orcuspay.dakpion.presentation.composables.XButton
+import com.orcuspay.dakpion.presentation.destinations.ContainerScreenDestination
 import com.orcuspay.dakpion.presentation.destinations.HomeScreenDestination
 import com.orcuspay.dakpion.presentation.destinations.OnboardScreenDestination
 import com.ramcosta.composedestinations.annotation.Destination
@@ -37,7 +38,7 @@ fun OnboardScreen(
         android.Manifest.permission.READ_SMS
     ) {
         if (it) {
-            navigator.navigate(HomeScreenDestination) {
+            navigator.navigate(ContainerScreenDestination) {
                 popUpTo(OnboardScreenDestination) {
                     inclusive = true
                 }

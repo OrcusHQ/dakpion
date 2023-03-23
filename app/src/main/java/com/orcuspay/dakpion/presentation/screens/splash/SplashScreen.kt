@@ -15,7 +15,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import com.orcuspay.dakpion.presentation.destinations.HomeScreenDestination
+import com.orcuspay.dakpion.presentation.destinations.ContainerScreenDestination
 import com.orcuspay.dakpion.presentation.destinations.OnboardScreenDestination
 import com.orcuspay.dakpion.presentation.destinations.SplashScreenDestination
 import com.ramcosta.composedestinations.annotation.Destination
@@ -38,7 +38,7 @@ fun SplashScreen(
     LaunchedEffect(Unit) {
         delay(1000L)
         if (smsPermissionState.status.isGranted) {
-            navigator.navigate(HomeScreenDestination) {
+            navigator.navigate(ContainerScreenDestination) {
                 popUpTo(SplashScreenDestination) {
                     inclusive = true
                 }

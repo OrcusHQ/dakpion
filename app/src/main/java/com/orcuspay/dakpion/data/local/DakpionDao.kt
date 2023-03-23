@@ -27,6 +27,10 @@ interface DakpionDao {
     @Query("SELECT * FROM credentialentity")
     suspend fun getCredentialsWithSMS(): List<CredentialEntitiesWithSMSEntities>
 
+    @Transaction
+    @Query("SELECT * FROM credentialentity")
+    fun getCredentialsWithSMSLiveData(): LiveData<List<CredentialEntitiesWithSMSEntities>>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun createSMS(smsEntity: SMSEntity)
 
