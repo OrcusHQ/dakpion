@@ -5,11 +5,13 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.orcuspay.dakpion.data.exception.InvalidCredentialException
 import com.orcuspay.dakpion.data.remote.ApiResult
 import com.orcuspay.dakpion.domain.model.SMSStatus
 import com.orcuspay.dakpion.domain.repository.DakpionRepository
 import com.orcuspay.dakpion.domain.repository.SmsRepository
 import com.orcuspay.dakpion.util.DakpionPreference
+import com.orcuspay.dakpion.util.NotificationHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.*
@@ -21,6 +23,7 @@ class DakpionKamla @AssistedInject constructor(
     private val dakpionRepository: DakpionRepository,
     private val smsRepository: SmsRepository,
     private val dakpionPreference: DakpionPreference,
+    private val notificationHelper: NotificationHelper,
 ) : CoroutineWorker(
     appContext = context,
     params = workerParams
@@ -50,14 +53,21 @@ class DakpionKamla @AssistedInject constructor(
                                     it.status == SMSStatus.ERROR) && it.status != SMSStatus.DUPLICATE
                         }
                         .forEach { sms ->
-                            Log.d("kraken", "Sending $sms")
                             val result = dakpionRepository.send(
                                 credential = credential,
                                 sms = sms
                             )
                             when (result) {
                                 is ApiResult.Error -> {
-                                    hasError = true
+                                    if (result.exception !is InvalidCredentialException) {
+                                        hasError = true
+                                    } else {
+                                        notificationHelper.showNotification(
+                                            notificationId = credential.id,
+                                            title = "Invalid credential",
+                                            content = "${credential.businessName} has invalid credentials.  We have disabled it."
+                                        )
+                                    }
                                 }
                                 is ApiResult.Success -> {
 

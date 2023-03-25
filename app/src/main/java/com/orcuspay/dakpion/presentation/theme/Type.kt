@@ -21,6 +21,10 @@ val interFontFamily = FontFamily(
     Font(R.font.inter_medium, weight = FontWeight.Medium),
 )
 
+val gilroyFontFamily = FontFamily(
+    Font(R.font.gilroy_heavy, weight = FontWeight.Black)
+)
+
 val Typography = Typography(
     body1 = TextStyle(
         fontFamily = FontFamily.Default,

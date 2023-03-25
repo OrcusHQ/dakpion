@@ -1,6 +1,7 @@
 package com.orcuspay.dakpion.presentation.screens.logs
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,11 +18,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.orcuspay.dakpion.R
 import com.orcuspay.dakpion.domain.model.SMSStatus
 import com.orcuspay.dakpion.presentation.composables.Gap
@@ -82,20 +88,35 @@ fun SMSLogScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Start
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .padding(start = 8.dp, top = 7.dp, bottom = 7.dp)
-                                .size(22.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    brush = Brush.linearGradient(
-                                        colors = listOf(
-                                            MaterialTheme.colors.primary,
-                                            MaterialTheme.colors.primaryVariant
+                        if (credential.icon == null) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(start = 8.dp, top = 7.dp, bottom = 7.dp)
+                                    .size(22.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(
+                                                MaterialTheme.colors.primary,
+                                                MaterialTheme.colors.primaryVariant
+                                            )
                                         )
                                     )
-                                )
-                        )
+                            )
+                        } else {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(credential.icon)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = "image",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .padding(start = 8.dp, top = 7.dp, bottom = 7.dp)
+                                    .clip(shape = CircleShape)
+                                    .size(22.dp)
+                            )
+                        }
                         Gap(width = 8.dp)
                         Text(
                             text = credential.businessName,
@@ -109,98 +130,140 @@ fun SMSLogScreen(
                 }
             }
             Gap(height = 16.dp)
-            LazyColumn {
-                groupedSMS.forEach { (date, smsGroup) ->
-                    item {
-                        Text(
-                            text = date,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 15.sp,
-                            color = Color.Black,
-                            fontFamily = interFontFamily,
-                            modifier = Modifier.padding(start = 16.dp),
-                        )
-                    }
 
-                    items(smsGroup.size) { i ->
-                        val sms = smsGroup[i]
+            if (groupedSMS.isEmpty()) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    Gap(height = 80.dp)
+                    Image(
+                        painter = painterResource(id = R.drawable.empty),
+                        contentDescription = "",
+                        modifier = Modifier
+                            .size(175.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                    Gap(height = 4.dp)
+                    Text(
+                        text = "Everything is empty here",
+                        fontFamily = interFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 22.sp,
+                        color = Color.Black,
+                        textAlign = TextAlign.Center,
+                    )
+                    Gap(height = 8.dp)
+                    Text(
+                        text = "Your SMS logs will be here",
+                        fontFamily = interFontFamily,
+                        color = Color(0xFF545969),
+                        textAlign = TextAlign.Center,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            } else {
+                LazyColumn {
+                    groupedSMS.forEach { (date, smsGroup) ->
+                        item {
+                            Text(
+                                text = date,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp,
+                                color = Color.Black,
+                                fontFamily = interFontFamily,
+                                modifier = Modifier.padding(
+                                    start = 16.dp,
+                                    top = 5.dp,
+                                    bottom = 5.dp
+                                ),
+                            )
+                        }
 
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp, vertical = 10.dp)
-                                .border(
-                                    width = 1.dp,
-                                    color = Color(0xFFEBEEF1),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
+                        items(smsGroup.size) { i ->
+                            val sms = smsGroup[i]
 
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.Start,
-                                verticalArrangement = Arrangement.Top,
-                                modifier = Modifier.padding(12.dp)
+                            Box(
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp, vertical = 5.dp)
+                                    .border(
+                                        width = 1.dp,
+                                        color = Color(0xFFEBEEF1),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+
                             ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth()
+                                Column(
+                                    horizontalAlignment = Alignment.Start,
+                                    verticalArrangement = Arrangement.Top,
+                                    modifier = Modifier.padding(12.dp)
                                 ) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = sms.sender,
+                                            fontFamily = interFontFamily,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 14.sp,
+                                            color = Color.Black
+                                        )
+                                        Text(
+                                            text = sms.date.toLogTimeFormat(),
+                                            fontFamily = interFontFamily,
+                                            fontWeight = FontWeight.Normal,
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF545969)
+                                        )
+                                    }
+                                    Gap(height = 8.dp)
                                     Text(
-                                        text = sms.sender,
+                                        text = sms.body,
                                         fontFamily = interFontFamily,
-                                        fontWeight = FontWeight.Medium,
+                                        fontWeight = FontWeight.Normal,
                                         fontSize = 14.sp,
                                         color = Color.Black
                                     )
-                                    Text(
-                                        text = sms.date.toLogTimeFormat(),
-                                        fontFamily = interFontFamily,
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = 12.sp,
-                                        color = Color(0xFF545969)
-                                    )
-                                }
-                                Gap(height = 8.dp)
-                                Text(
-                                    text = sms.body,
-                                    fontFamily = interFontFamily,
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 14.sp,
-                                    color = Color.Black
-                                )
-                                Gap(height = 8.dp)
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Start
-                                ) {
-                                    SMSStatusBadge(status = sms.status)
-                                    Gap(width = 12.dp)
-                                    if (sms.status == SMSStatus.ERROR) {
-                                        Box(
-                                            modifier = Modifier.clickable {
-                                                viewModel.retry(
-                                                    credential = credentials[selectedCredential],
-                                                    sms = sms
-                                                )
+                                    Gap(height = 8.dp)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Start
+                                    ) {
+                                        SMSStatusBadge(status = sms.status)
+                                        Gap(width = 12.dp)
+                                        if (sms.status == SMSStatus.ERROR) {
+                                            Box(
+                                                modifier = Modifier.clickable {
+                                                    viewModel.retry(
+                                                        credential = credentials[selectedCredential],
+                                                        sms = sms
+                                                    )
+                                                }
+                                            ) {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Icon(
+                                                        painter = painterResource(id = R.drawable.ic_retry),
+                                                        contentDescription = "",
+                                                        tint = Color(0xFF635BFF)
+                                                    )
+                                                    Gap(width = 4.dp)
+                                                    Text(
+                                                        text = "Retry now",
+                                                        fontSize = 14.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        fontFamily = interFontFamily,
+                                                        color = Color(0xFF635BFF)
+                                                    )
+                                                }
                                             }
-                                        ) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(
-                                                    painter = painterResource(id = R.drawable.ic_retry),
-                                                    contentDescription = "",
-                                                    tint = Color(0xFF635BFF)
-                                                )
-                                                Gap(width = 4.dp)
-                                                Text(
-                                                    text = "Retry now",
-                                                    fontSize = 14.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    fontFamily = interFontFamily,
-                                                    color = Color(0xFF635BFF)
-                                                )
-                                            }
-                                        }
 
+                                        }
                                     }
                                 }
                             }
@@ -255,7 +318,7 @@ fun SMSStatusBadge(
             Text(
                 text = text,
                 color = color,
-                fontFamily = epilogueFontFamily,
+                fontFamily = interFontFamily,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(horizontal = 4.dp)

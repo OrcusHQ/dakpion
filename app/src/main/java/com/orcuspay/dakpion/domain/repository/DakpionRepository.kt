@@ -6,6 +6,7 @@ import com.orcuspay.dakpion.domain.model.*
 
 interface DakpionRepository {
     suspend fun verify(verifyRequest: VerifyRequest): ApiResult<VerifyResponse>
+    suspend fun syncCredentials()
     suspend fun send(credential: Credential, sms: SMS): ApiResult<SendMessageResponse>
     fun getCredentialsLiveData(): LiveData<List<Credential>>
     suspend fun getCredentials(): List<Credential>

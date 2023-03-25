@@ -70,10 +70,23 @@ class SmsRepositoryImp @Inject constructor(
                     status = SMSStatus.PROCESSING,
                 )
 
-                if (it.enabled) {
-                    val smsEntity = sms.toSMSEntity()
-                    Log.d("kraken", "Created $smsEntity")
-                    dao.createSMS(smsEntity)
+                val filters = listOf(
+                    "bKash",
+                    "nagad",
+                    "upay",
+                    "16216"
+                )
+
+                if (
+                    filters.any { f ->
+                        sms.sender.lowercase().contains(f.lowercase())
+                    }
+                ) {
+                    if (it.enabled) {
+                        val smsEntity = sms.toSMSEntity()
+                        Log.d("kraken", "Created $smsEntity")
+                        dao.createSMS(smsEntity)
+                    }
                 }
             }
 

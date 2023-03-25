@@ -26,22 +26,37 @@ class DakpionRepositoryImp @Inject constructor(
     override suspend fun verify(verifyRequest: VerifyRequest): ApiResult<VerifyResponse> {
 
         val result = api.verify(verifyRequest.toVerifyRequestDto())
+        val credentials = dao.getCredentials()
 
         return if (result.isSuccess) {
             val response = result.getOrNull()
             val verifyResponse = response?.toVerifyResponse()
             if (verifyResponse != null) {
-                dao.createCredential(
-                    CredentialEntity(
-                        accessKey = verifyRequest.accessKey,
-                        secretKey = verifyRequest.secretKey,
-                        mode = verifyRequest.mode,
-                        credentialId = verifyResponse.id,
-                        businessName = verifyResponse.name,
-                        enabled = true,
+
+                if (credentials.any {
+                        it.credentialId == verifyResponse.id && it.mode == verifyRequest.mode
+                    }
+                ) {
+                    ApiResult.Error(
+                        exception = InternalServerException(),
+                        message = "This business is already added"
                     )
-                )
-                ApiResult.Success(data = response.toVerifyResponse())
+                } else {
+                    dao.createCredential(
+                        CredentialEntity(
+                            accessKey = verifyRequest.accessKey,
+                            secretKey = verifyRequest.secretKey,
+                            mode = verifyRequest.mode,
+                            credentialId = verifyResponse.id,
+                            businessName = verifyResponse.name,
+                            enabled = true,
+                            icon = verifyResponse.icon,
+                            unauthorized = false,
+                        )
+                    )
+                    ApiResult.Success(data = response.toVerifyResponse())
+                }
+
             } else {
                 ApiResult.Error(
                     exception = InternalServerException(),
@@ -76,7 +91,7 @@ class DakpionRepositoryImp @Inject constructor(
 
         val result = api.send(sendMessageRequest.toSendMessageRequestDto())
 
-        return if (result.isSuccess) {
+        if (result.isSuccess) {
             val response = result.getOrNull()
             val verifyResponse = response?.toSendMessageResponse()
             if (verifyResponse != null) {
@@ -93,49 +108,97 @@ class DakpionRepositoryImp @Inject constructor(
                         ).toSMSEntity()
                     )
                 }
-                ApiResult.Success(data = response.toSendMessageResponse())
+                return ApiResult.Success(data = response.toSendMessageResponse())
             } else {
                 dao.updateSMS(
                     smsEntity = sms.copy(
                         status = SMSStatus.ERROR
                     ).toSMSEntity()
                 )
-                ApiResult.Error(
+                return ApiResult.Error(
                     exception = InternalServerException(),
                     message = InternalServerException().message
                 )
             }
         } else {
             val exception = result.exceptionOrNull()
-            if (exception != null) {
-                when (exception) {
-                    is DuplicateRequestException -> {
-                        dao.updateSMS(
-                            smsEntity = sms.copy(
-                                status = SMSStatus.DUPLICATE
-                            ).toSMSEntity()
-                        )
-                    }
-                    is InvalidCredentialException -> {
-                        dao.updateSMS(
-                            smsEntity = sms.copy(
-                                status = SMSStatus.UNAUTHORIZED
-                            ).toSMSEntity()
-                        )
-                    }
-                    else -> {
-                        dao.updateSMS(
-                            smsEntity = sms.copy(
-                                status = SMSStatus.ERROR
-                            ).toSMSEntity()
-                        )
-                    }
+            when (exception) {
+                is DuplicateRequestException -> {
+                    dao.updateSMS(
+                        smsEntity = sms.copy(
+                            status = SMSStatus.DUPLICATE
+                        ).toSMSEntity()
+                    )
+                    return ApiResult.Success(data = null)
+                }
+                is InvalidCredentialException -> {
+                    dao.updateSMS(
+                        smsEntity = sms.copy(
+                            status = SMSStatus.UNAUTHORIZED
+                        ).toSMSEntity()
+                    )
+                    dao.updateCredential(
+                        credentialEntity = credential.copy(
+                            unauthorized = true,
+                            enabled = false
+                        ).toCredentialEntity()
+                    )
+                    return ApiResult.Error(exception = exception)
+                }
+                else -> {
+                    dao.updateSMS(
+                        smsEntity = sms.copy(
+                            status = SMSStatus.ERROR
+                        ).toSMSEntity()
+                    )
                 }
             }
-            ApiResult.Error(
+            return ApiResult.Error(
                 message = result.exceptionOrNull()?.message,
                 exception = result.exceptionOrNull() as Exception
             )
+        }
+    }
+
+    override suspend fun syncCredentials() {
+        val credentials = getCredentials()
+
+        credentials.forEach { credential ->
+            val result = api.verify(
+                VerifyRequest(
+                    accessKey = credential.accessKey,
+                    secretKey = credential.secretKey,
+                    mode = credential.mode
+                ).toVerifyRequestDto()
+            )
+
+            if (result.isSuccess) {
+                val response = result.getOrNull()
+                val verifyResponse = response?.toVerifyResponse()
+                if (verifyResponse != null) {
+                    dao.updateCredential(
+                        credentialEntity = credential.copy(
+                            businessName = verifyResponse.name,
+                            icon = verifyResponse.icon
+                        ).toCredentialEntity()
+                    )
+                }
+            } else {
+                val error = result.exceptionOrNull()
+                when (error) {
+                    is InvalidCredentialException -> {
+                        dao.updateCredential(
+                            credentialEntity = credential.copy(
+                                enabled = false,
+                                unauthorized = true,
+                            ).toCredentialEntity()
+                        )
+                    }
+                    else -> {
+
+                    }
+                }
+            }
         }
     }
 

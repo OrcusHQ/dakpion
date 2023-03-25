@@ -13,4 +13,6 @@ data class Credential(
     val credentialId: String,
     val businessName: String,
     val enabled: Boolean,
+    val icon: String?,
+    val unauthorized: Boolean,
 )

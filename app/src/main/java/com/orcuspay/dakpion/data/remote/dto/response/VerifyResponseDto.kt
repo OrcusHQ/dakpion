@@ -9,5 +9,6 @@ data class VerifyResponseDto(
 data class BusinessDto(
     val id: String,
     val name: String,
-    val userId: String
+    val userId: String,
+    val icon: String?,
 )

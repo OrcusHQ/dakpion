@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "c1de32ab82a2a5cea8516e2d03dd8ab5",
+    "identityHash": "5db6d7eec81e8e136731d344e5c93da5",
     "entities": [
       {
         "tableName": "CredentialEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `accessKey` TEXT NOT NULL, `secretKey` TEXT NOT NULL, `mode` TEXT NOT NULL, `credentialId` TEXT NOT NULL, `businessName` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT 1)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `accessKey` TEXT NOT NULL, `secretKey` TEXT NOT NULL, `mode` TEXT NOT NULL, `credentialId` TEXT NOT NULL, `businessName` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT 1, `icon` TEXT DEFAULT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -50,6 +50,13 @@
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "1"
+          },
+          {
+            "fieldPath": "icon",
+            "columnName": "icon",
+            "affinity": "TEXT",
+            "notNull": false,
+            "defaultValue": "NULL"
           }
         ],
         "primaryKey": {
@@ -132,7 +139,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c1de32ab82a2a5cea8516e2d03dd8ab5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5db6d7eec81e8e136731d344e5c93da5')"
     ]
   }
 }

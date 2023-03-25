@@ -7,6 +7,7 @@ import com.orcuspay.dakpion.data.local.DakpionDatabase
 import com.orcuspay.dakpion.data.remote.DakpionApi
 import com.orcuspay.dakpion.data.remote.retrofit.NetworkResponseAdapterFactory
 import com.orcuspay.dakpion.util.DakpionPreference
+import com.orcuspay.dakpion.util.NotificationHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -64,5 +65,13 @@ object AppModule {
         app: Application
     ): DakpionPreference {
         return DakpionPreference(app.applicationContext)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationHelper(
+        app: Application
+    ): NotificationHelper {
+        return NotificationHelper(app.applicationContext)
     }
 }

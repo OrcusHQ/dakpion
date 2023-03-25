@@ -3,35 +3,38 @@ package com.orcuspay.dakpion
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.telephony.SmsMessage
+import android.util.Log
+import androidx.work.*
+import com.orcuspay.dakpion.worker.DakpionKamla
+import java.util.concurrent.TimeUnit
 
 
 class SmsReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
+        Log.d("pluton", "Receiver Start")
         if (intent.action != null && intent.action == SMS_RECEIVED) {
-            val bundle = intent.extras
-            if (bundle != null) {
-                val pdus = bundle.getString(SMS_BUNDLE) as Array<*>? ?: return
-                val format = bundle.getString(EXTRA_BUNDLE)
-                val messages = mutableListOf<SmsMessage>()
-                var smsMessage: String? = ""
-                var phoneNumber: String? = ""
-                for (i in pdus.indices) {
-                    messages[i] = SmsMessage.createFromPdu(pdus[i] as ByteArray, format)
-                    smsMessage += messages[i].messageBody
-                    phoneNumber = messages[i].originatingAddress
-                }
+            val workManager = WorkManager.getInstance(context)
 
-                // Trigger your background task here, passing the message and phone number
-                startBackgroundTask(context, smsMessage!!, phoneNumber!!)
-            }
+            val constraints: Constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+
+            val workRequest =
+                OneTimeWorkRequestBuilder<DakpionKamla>()
+                    .setConstraints(constraints)
+                    .setBackoffCriteria(
+                        BackoffPolicy.LINEAR,
+                        2L,
+                        TimeUnit.MINUTES
+                    )
+                    .addTag(DakpionKamla.TAG)
+                    .build()
+
+            workManager.enqueue(workRequest)
         }
     }
 
-    private fun startBackgroundTask(context: Context, smsMessage: String, phoneNumber: String) {
-        // You can start a background service, a Worker or any other background task here
-    }
 
     companion object {
         const val SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED"

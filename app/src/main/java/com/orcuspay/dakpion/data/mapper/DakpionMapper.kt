@@ -20,7 +20,8 @@ fun VerifyResponseDto.toVerifyResponse(): VerifyResponse {
         id = business.id,
         mode = if (mode == "prod") Mode.LIVE else Mode.TEST,
         name = business.name,
-        userId = business.userId
+        userId = business.userId,
+        icon = business.icon,
     )
 }
 
@@ -48,7 +49,9 @@ fun CredentialEntity.toCredential(): Credential {
         mode = mode,
         credentialId = credentialId,
         businessName = businessName,
-        enabled = enabled
+        enabled = enabled,
+        icon = icon,
+        unauthorized = unauthorized
     )
 }
 
@@ -60,6 +63,8 @@ fun Credential.toCredentialEntity(): CredentialEntity {
         mode = mode,
         credentialId = credentialId,
         businessName = businessName,
-        enabled = enabled
+        enabled = enabled,
+        icon = icon,
+        unauthorized = unauthorized
     )
 }

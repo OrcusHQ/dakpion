@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.orcuspay.dakpion.presentation.destinations.ContainerScreenDestination
 import com.orcuspay.dakpion.presentation.destinations.OnboardScreenDestination
@@ -32,12 +33,16 @@ fun SplashScreen(
     navigator: DestinationsNavigator,
     viewModel: SplashViewModel = hiltViewModel()
 ) {
-    val smsPermissionState = rememberPermissionState(
-        Manifest.permission.READ_SMS
+
+    val smsPermissionState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            Manifest.permission.READ_SMS,
+            Manifest.permission.RECEIVE_SMS,
+        )
     )
     LaunchedEffect(Unit) {
         delay(1000L)
-        if (smsPermissionState.status.isGranted) {
+        if (smsPermissionState.allPermissionsGranted) {
             navigator.navigate(ContainerScreenDestination) {
                 popUpTo(SplashScreenDestination) {
                     inclusive = true

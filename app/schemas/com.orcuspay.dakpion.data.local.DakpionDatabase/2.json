@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "9dffb84d9da937d88c02092dbb66fbbb",
+    "identityHash": "80e2a5652dfd067f09344c131985301e",
     "entities": [
       {
         "tableName": "CredentialEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `accessKey` TEXT NOT NULL, `secretKey` TEXT NOT NULL, `mode` TEXT NOT NULL, `credentialId` TEXT NOT NULL, `businessName` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `accessKey` TEXT NOT NULL, `secretKey` TEXT NOT NULL, `mode` TEXT NOT NULL, `credentialId` TEXT NOT NULL, `businessName` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT 1, `icon` TEXT DEFAULT NULL, `unauthorized` INTEGER NOT NULL DEFAULT 0)",
         "fields": [
           {
             "fieldPath": "id",
@@ -43,6 +43,27 @@
             "columnName": "businessName",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "enabled",
+            "columnName": "enabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1"
+          },
+          {
+            "fieldPath": "icon",
+            "columnName": "icon",
+            "affinity": "TEXT",
+            "notNull": false,
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "unauthorized",
+            "columnName": "unauthorized",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
           }
         ],
         "primaryKey": {
@@ -53,12 +74,79 @@
         },
         "indices": [],
         "foreignKeys": []
+      },
+      {
+        "tableName": "SMSEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `credentialId` INTEGER NOT NULL, `smsId` INTEGER NOT NULL, `sender` TEXT NOT NULL, `date` INTEGER NOT NULL, `body` TEXT NOT NULL, `status` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "credentialId",
+            "columnName": "credentialId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "smsId",
+            "columnName": "smsId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sender",
+            "columnName": "sender",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "body",
+            "columnName": "body",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_SMSEntity_credentialId_smsId",
+            "unique": true,
+            "columnNames": [
+              "credentialId",
+              "smsId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_SMSEntity_credentialId_smsId` ON `${TABLE_NAME}` (`credentialId`, `smsId`)"
+          }
+        ],
+        "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9dffb84d9da937d88c02092dbb66fbbb')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '80e2a5652dfd067f09344c131985301e')"
     ]
   }
 }

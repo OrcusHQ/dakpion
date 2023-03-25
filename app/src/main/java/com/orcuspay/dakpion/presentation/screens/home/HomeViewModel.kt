@@ -1,6 +1,5 @@
 package com.orcuspay.dakpion.presentation.screens.home
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,29 +7,33 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.orcuspay.dakpion.domain.model.Credential
-import com.orcuspay.dakpion.domain.model.Mode
-import com.orcuspay.dakpion.domain.model.SendMessageRequest
 import com.orcuspay.dakpion.domain.repository.DakpionRepository
-import com.orcuspay.dakpion.domain.repository.SmsRepository
+import com.orcuspay.dakpion.util.NotificationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import java.util.*
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     val text: String,
     private val dakpionRepository: DakpionRepository,
-    private val smsRepository: SmsRepository,
+    private val notificationHelper: NotificationHelper,
 ) : ViewModel() {
 
     var state by mutableStateOf(HomeState())
 
     init {
         viewModelScope.launch {
-            val test = dakpionRepository.getCredentialWithSMS()
-            for (t in test) {
-                Log.d("kraken", t.toString())
+            dakpionRepository.syncCredentials()
+            val credentials = dakpionRepository.getCredentials()
+            credentials.forEach {
+                if (it.unauthorized) {
+                    notificationHelper.showNotification(
+                        notificationId = it.id,
+                        title = "Invalid credentials",
+                        content = "${it.businessName} has invalid credentials. We have disabled it."
+                    )
+                }
             }
         }
     }

@@ -2,26 +2,24 @@ package com.orcuspay.dakpion.presentation.screens.business
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.orcuspay.dakpion.R
-import com.orcuspay.dakpion.presentation.composables.Gap
-import com.orcuspay.dakpion.presentation.composables.TopBar
-import com.orcuspay.dakpion.presentation.composables.XSwitch
-import com.orcuspay.dakpion.presentation.composables.XTextField
+import com.orcuspay.dakpion.presentation.composables.*
+import com.orcuspay.dakpion.presentation.destinations.AllDoneScreenDestination
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -53,44 +51,10 @@ fun AddNewBusinessScreen(
     Scaffold(
         modifier = Modifier,
         topBar = {
-            TopBar(title = "Add new business", showBackButton = true) {
+            TopBar(showBackButton = true) {
                 navigator.navigateUp()
             }
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    if (buttonEnabled) {
-                        viewModel.verify(
-                            accessKey = accessKey.text,
-                            secretKey = secretKey.text,
-                            isTestMode = isTestMode,
-                        ) {
-                            navigator.navigateUp()
-                        }
-                    }
-                },
-                shape = CircleShape,
-                backgroundColor = if (buttonEnabled) MaterialTheme.colors.primaryVariant else Color(
-                    0xFFF6F8FA
-                ),
-                modifier = Modifier
-                    .size(86.dp)
-                    .offset(y = (-100).dp),
-                elevation = FloatingActionButtonDefaults.elevation(0.dp)
-            ) {
-                if (state.loading) {
-                    CircularProgressIndicator(color = MaterialTheme.colors.primaryVariant)
-                } else {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_forward),
-                        contentDescription = "Add",
-                        tint = if (buttonEnabled) Color.White else Color(0xFFA3ACBA)
-                    )
-                }
-            }
-        },
-        floatingActionButtonPosition = FabPosition.End,
     ) { pv ->
 
         Column(
@@ -108,7 +72,7 @@ fun AddNewBusinessScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0xFFDF1B41)),
+                        .background(Color(0xFFFFE7F2)),
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Text(
@@ -116,7 +80,7 @@ fun AddNewBusinessScreen(
                         fontWeight = FontWeight.Medium,
                         fontSize = 18.sp,
                         fontFamily = interFontFamily,
-                        color = Color.White,
+                        color = Color(0xFF890D37),
                         modifier = Modifier.padding(16.dp)
                     )
                 }
@@ -137,7 +101,10 @@ fun AddNewBusinessScreen(
                 title = "Access key",
                 placeholder = "ak_prod_",
                 borderColor = Color(0xFFC0C8D2),
-                placeholderColor = Color(0xFF87909F)
+                placeholderColor = Color(0xFF87909F),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next
+                )
             )
 
             Gap(height = 24.dp)
@@ -155,7 +122,10 @@ fun AddNewBusinessScreen(
                 title = "Secret key",
                 placeholder = "sk_prod_",
                 borderColor = Color(0xFFC0C8D2),
-                placeholderColor = Color(0xFF87909F)
+                placeholderColor = Color(0xFF87909F),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done
+                )
             )
 
             Gap(height = 30.dp)
@@ -181,6 +151,23 @@ fun AddNewBusinessScreen(
                         isTestMode = it
                     },
                 )
+            }
+
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.BottomCenter) {
+                XButton(
+                    text = "Add business",
+                    enabled = buttonEnabled,
+                    loading = state.loading,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+                ) {
+                    viewModel.verify(
+                        accessKey = accessKey.text,
+                        secretKey = secretKey.text,
+                        isTestMode = isTestMode,
+                    ) {
+                        navigator.navigate(AllDoneScreenDestination)
+                    }
+                }
             }
         }
     }

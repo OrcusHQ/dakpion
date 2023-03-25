@@ -1,5 +1,6 @@
 package com.orcuspay.dakpion.data.local
 
+import androidx.annotation.Nullable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -15,4 +16,9 @@ data class CredentialEntity(
     val businessName: String,
     @ColumnInfo(defaultValue = "1")
     val enabled: Boolean,
+    @ColumnInfo(defaultValue = "NULL")
+    @Nullable
+    val icon: String?,
+    @ColumnInfo(defaultValue = "0")
+    val unauthorized: Boolean,
 )

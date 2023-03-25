@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -31,6 +32,7 @@ import com.orcuspay.dakpion.domain.model.Credential
 import com.orcuspay.dakpion.presentation.composables.CredentialCard
 import com.orcuspay.dakpion.presentation.composables.Gap
 import com.orcuspay.dakpion.presentation.composables.TopBar
+import com.orcuspay.dakpion.presentation.composables.XButton
 import com.orcuspay.dakpion.presentation.destinations.AddNewBusinessScreenDestination
 import com.orcuspay.dakpion.presentation.destinations.SMSLogScreenDestination
 import com.orcuspay.dakpion.presentation.theme.epilogueFontFamily
@@ -53,24 +55,54 @@ fun HomeScreen(
     Scaffold(
         modifier = Modifier,
         topBar = {
-            TopBar(title = "Home")
+            TopBar(
+                title = "Business",
+                actionButton = {
+                    if (credentials.isNotEmpty())
+                        XButton(
+                            text = "Add",
+                            style = TextStyle(
+                                fontFamily = interFontFamily,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp,
+                                color = Color(0xFF102C60),
+                                letterSpacing = 0.sp
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp),
+                            fillMaxWidth = false,
+                            height = 32.dp,
+                            modifier = Modifier
+                                .padding(end = 16.dp)
+                        ) {
+                            navigator.navigate(AddNewBusinessScreenDestination)
+                        }
+                }
+            )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    navigator.navigate(AddNewBusinessScreenDestination)
-                },
-                shape = CircleShape,
-                backgroundColor = MaterialTheme.colors.primaryVariant,
-                modifier = Modifier
-                    .size(86.dp)
-                    .offset(y = (-100).dp),
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_add),
-                    contentDescription = "Add"
-                )
-            }
+            if (credentials.isEmpty())
+                FloatingActionButton(
+                    onClick = {
+                        navigator.navigate(AddNewBusinessScreenDestination)
+                    },
+                    shape = CircleShape,
+                    backgroundColor = Color(0xFFD1BEFE),
+                    modifier = Modifier
+                        .size(86.dp)
+                        .offset(y = (-100).dp),
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 0.dp
+                    )
+                ) {
+                    Text(
+                        text = "Add",
+                        fontFamily = interFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp,
+                        color = Color(0xFF102C60),
+                        letterSpacing = 0.sp
+                    )
+                }
         },
         floatingActionButtonPosition = FabPosition.Center,
     ) { pv ->
@@ -206,12 +238,12 @@ fun HomeScreen(
                         .fillMaxSize()
                         .padding(16.dp)
                 ) {
+                    Gap(height = 80.dp)
                     Image(
                         painter = painterResource(id = R.drawable.empty),
                         contentDescription = "",
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .size(262.dp),
+                            .size(175.dp),
                         contentScale = ContentScale.Fit
                     )
                     Gap(height = 4.dp)

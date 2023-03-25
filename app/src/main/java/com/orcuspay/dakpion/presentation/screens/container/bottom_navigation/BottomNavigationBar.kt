@@ -58,13 +58,6 @@ fun BottomNavigationBar(
                     }
                 },
                 label = {
-//                    Text(
-//                        text = navigationItem.title,
-//                        maxLines = 1,
-//                        fontSize = 10.sp,
-//                        fontWeight = FontWeight(500),
-//                        softWrap = false
-//                    )
                     BoxWithConstraints {
                         Text(
                             modifier = Modifier
@@ -79,8 +72,8 @@ fun BottomNavigationBar(
                         )
                     }
                 },
-                selectedContentColor = MaterialTheme.colors.primary,
-                unselectedContentColor = MaterialTheme.colors.secondary,
+                selectedContentColor = Color(0xFF102C60),
+                unselectedContentColor = Color(0xFFA3ACBA),
                 alwaysShowLabel = true,
                 selected = selected,
                 onClick = {
