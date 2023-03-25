@@ -58,8 +58,7 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-//                    navigator.navigate(AddNewBusinessScreenDestination)
-                    navigator.navigate(SMSLogScreenDestination)
+                    navigator.navigate(AddNewBusinessScreenDestination)
                 },
                 shape = CircleShape,
                 backgroundColor = MaterialTheme.colors.primaryVariant,

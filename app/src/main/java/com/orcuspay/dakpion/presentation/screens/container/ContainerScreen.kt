@@ -1,16 +1,20 @@
 package com.orcuspay.dakpion.presentation.screens.container
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavController
-import androidx.navigation.NavOptionsBuilder
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.orcuspay.dakpion.presentation.NavGraphs
-import com.orcuspay.dakpion.presentation.screens.home.BottomBarDestination
-import com.ramcosta.composedestinations.DestinationsNavHost
+import com.orcuspay.dakpion.presentation.screens.container.bottom_navigation.BottomNavigationBar
+import com.orcuspay.dakpion.presentation.screens.container.bottom_navigation.NavigationItems
+import com.orcuspay.dakpion.presentation.screens.home.HomeScreen
+import com.orcuspay.dakpion.presentation.screens.logs.SMSLogScreen
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
-import com.ramcosta.composedestinations.navigation.navigate
 
 @Destination
 @Composable
@@ -22,38 +26,27 @@ fun ContainerScreen(
 
     Scaffold(
         bottomBar = {
-            BottomBar(navController = navController)
+            BottomNavigationBar(
+                navController = navController,
+            )
         }
     ) {
-        DestinationsNavHost(
-            navController = navController,
-            navGraph = NavGraphs.root
-        )
+        Box(modifier = Modifier.padding(it)) {
+            Navigation(navController, navigator)
+        }
     }
 }
 
 
 @Composable
-fun BottomBar(
-    navController: NavController
-) {
-    var currentDestination =
-        BottomBarDestination.Home
+fun Navigation(navController: NavHostController, navigator: DestinationsNavigator) {
+    NavHost(navController, startDestination = NavigationItems.first().route) {
 
-
-    BottomNavigation {
-        BottomBarDestination.values().forEach { destination ->
-            BottomNavigationItem(
-                selected = currentDestination == destination,
-                onClick = {
-                    currentDestination = destination
-                    navController.navigate(destination.direction, fun NavOptionsBuilder.() {
-                        launchSingleTop = true
-                    })
-                },
-                icon = { Icon(destination.icon, contentDescription = null) },
-                label = { Text(text = destination.label) },
-            )
+        composable(NavigationItems.first().route) {
+            HomeScreen(navigator = navigator)
+        }
+        composable(NavigationItems.last().route) {
+            SMSLogScreen(navigator = navigator)
         }
     }
 }
