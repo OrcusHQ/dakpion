@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.sp
 import com.orcuspay.dakpion.R
 import com.orcuspay.dakpion.domain.model.Credential
 import com.orcuspay.dakpion.domain.model.Mode
-import com.orcuspay.dakpion.presentation.theme.epilogueFontFamily
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.orcuspay.dakpion.util.ifTrue
 

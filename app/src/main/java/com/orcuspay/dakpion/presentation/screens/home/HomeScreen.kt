@@ -34,8 +34,6 @@ import com.orcuspay.dakpion.presentation.composables.Gap
 import com.orcuspay.dakpion.presentation.composables.TopBar
 import com.orcuspay.dakpion.presentation.composables.XButton
 import com.orcuspay.dakpion.presentation.destinations.AddNewBusinessScreenDestination
-import com.orcuspay.dakpion.presentation.destinations.SMSLogScreenDestination
-import com.orcuspay.dakpion.presentation.theme.epilogueFontFamily
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -207,7 +205,7 @@ fun HomeScreen(
                                         Text(
                                             text = "Delete",
                                             fontSize = 16.sp,
-                                            fontFamily = epilogueFontFamily,
+                                            fontFamily = interFontFamily,
                                             fontWeight = FontWeight.Medium,
                                             color = Color.White
                                         )

@@ -32,7 +32,6 @@ import com.orcuspay.dakpion.R
 import com.orcuspay.dakpion.domain.model.SMSStatus
 import com.orcuspay.dakpion.presentation.composables.Gap
 import com.orcuspay.dakpion.presentation.composables.TopBar
-import com.orcuspay.dakpion.presentation.theme.epilogueFontFamily
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.orcuspay.dakpion.util.ifTrue
 import com.orcuspay.dakpion.util.toLogTimeFormat

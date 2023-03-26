@@ -52,7 +52,7 @@ class NotificationHelper(
 
         val builder =
             NotificationCompat.Builder(context, BUSINESS_NOTIFICATIONS)
-                .setSmallIcon(R.mipmap.ic_launcher_foreground)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(title)
                 .setContentText(content)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

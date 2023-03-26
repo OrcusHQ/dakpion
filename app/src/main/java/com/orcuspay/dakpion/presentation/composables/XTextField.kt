@@ -60,8 +60,8 @@ fun XTextField(
         if (title != null) {
             Text(
                 text = title,
-                fontWeight = FontWeight.Medium,
-                fontSize = 16.sp,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
                 fontFamily = interFontFamily,
                 color = Color.Black,
             )
