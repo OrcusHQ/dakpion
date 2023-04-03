@@ -2,7 +2,6 @@ package com.orcuspay.dakpion.presentation.screens.onboard
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.orcuspay.dakpion.R
@@ -31,7 +31,8 @@ import com.ramcosta.composedestinations.navigation.popUpTo
 @Composable
 @Destination
 fun OnboardScreen(
-    navigator: DestinationsNavigator
+    navigator: DestinationsNavigator,
+    viewModel: OnboardViewModel = hiltViewModel()
 ) {
 
     val smsPermissionState = rememberMultiplePermissionsState(
@@ -89,6 +90,7 @@ fun OnboardScreen(
                 text = "Continue",
             ) {
                 smsPermissionState.launchMultiplePermissionRequest()
+                viewModel.addDefaultFilters()
             }
         }
     }

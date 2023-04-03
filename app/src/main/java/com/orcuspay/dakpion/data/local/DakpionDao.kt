@@ -37,4 +37,21 @@ interface DakpionDao {
     @Update
     suspend fun updateSMS(smsEntity: SMSEntity)
 
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun createFilter(filterEntity: FilterEntity)
+
+    @Query("SELECT * FROM filterentity")
+    suspend fun getFilters(): List<FilterEntity>
+
+    @Query("SELECT * FROM filterentity WHERE enabled")
+    suspend fun getEnabledFilters(): List<FilterEntity>
+
+    @Query("SELECT * FROM filterentity")
+    fun getFiltersLiveData(): LiveData<List<FilterEntity>>
+
+    @Update
+    suspend fun updateFilter(filterEntity: FilterEntity)
+
+    @Delete
+    suspend fun deleteFilter(filterEntity: FilterEntity)
 }

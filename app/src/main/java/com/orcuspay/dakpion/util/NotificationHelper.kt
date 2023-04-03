@@ -6,10 +6,13 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.compose.material.MaterialTheme
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.orcuspay.dakpion.MainActivity
 import com.orcuspay.dakpion.R
+import com.orcuspay.dakpion.presentation.theme.PrimaryColor
 
 class NotificationHelper(
     private val context: Context,
@@ -53,6 +56,7 @@ class NotificationHelper(
         val builder =
             NotificationCompat.Builder(context, BUSINESS_NOTIFICATIONS)
                 .setSmallIcon(R.drawable.ic_notification)
+                .setColor(PrimaryColor.toArgb())
                 .setContentTitle(title)
                 .setContentText(content)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

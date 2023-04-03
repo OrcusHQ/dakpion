@@ -7,4 +7,5 @@ enum class SMSStatus {
     NOT_STORED,
     UNAUTHORIZED,
     DUPLICATE,
+    FILTERED,
 }

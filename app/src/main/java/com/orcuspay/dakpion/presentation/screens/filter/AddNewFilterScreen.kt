@@ -1,15 +1,14 @@
-package com.orcuspay.dakpion.presentation.screens.business
+package com.orcuspay.dakpion.presentation.screens.filter
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -18,7 +17,10 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.orcuspay.dakpion.presentation.composables.*
+import com.orcuspay.dakpion.presentation.composables.Gap
+import com.orcuspay.dakpion.presentation.composables.TopBar
+import com.orcuspay.dakpion.presentation.composables.XButton
+import com.orcuspay.dakpion.presentation.composables.XTextField
 import com.orcuspay.dakpion.presentation.destinations.AllDoneScreenDestination
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
@@ -26,23 +28,20 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
 @Destination
 @Composable
-fun AddNewBusinessScreen(
+fun AddNewFilterScreen(
     navigator: DestinationsNavigator,
-    viewModel: AddNewBusinessViewModel = hiltViewModel()
+    viewModel: AddNewFilterViewModel = hiltViewModel()
 ) {
 
-    val (accessKey, setAccessKey) = remember {
+    val (sender, setSender) = remember {
         mutableStateOf(TextFieldValue())
     }
 
-    val (secretKey, setSecretKey) = remember {
+    val (value, setValue) = remember {
         mutableStateOf(TextFieldValue())
     }
 
-
-    val state = viewModel.state
-
-    val buttonEnabled = !state.loading && accessKey.text.isNotBlank() && secretKey.text.isNotBlank()
+    val buttonEnabled = value.text.isNotBlank()
 
     Scaffold(
         modifier = Modifier,
@@ -62,31 +61,9 @@ fun AddNewBusinessScreen(
         ) {
             Gap(height = 30.dp)
 
-            if (state.error != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0xFFFFE7F2)),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    Text(
-                        text = state.error,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 18.sp,
-                        fontFamily = interFontFamily,
-                        color = Color(0xFF890D37),
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-                Gap(height = 24.dp)
-            }
-
-
             XTextField(
-                value = accessKey,
-                onValueChange = setAccessKey,
+                value = sender,
+                onValueChange = setSender,
                 textStyle = TextStyle(
                     fontFamily = interFontFamily,
                     fontWeight = FontWeight.Medium,
@@ -94,8 +71,8 @@ fun AddNewBusinessScreen(
                     color = Color.Black,
                 ),
                 modifier = Modifier.padding(horizontal = 16.dp),
-                title = "Access key",
-                placeholder = "ak_prod_",
+                title = "Sender",
+                placeholder = "bKash",
                 borderColor = Color(0xFFC0C8D2),
                 placeholderColor = Color(0xFF87909F),
                 keyboardOptions = KeyboardOptions(
@@ -103,11 +80,22 @@ fun AddNewBusinessScreen(
                 )
             )
 
+            Gap(height = 8.dp)
+
+            Text(
+                text = "If empty, this filter applies to all messages from all senders.",
+                fontFamily = interFontFamily,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                color = Color(0xFF545969),
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+
             Gap(height = 24.dp)
 
             XTextField(
-                value = secretKey,
-                onValueChange = setSecretKey,
+                value = value,
+                onValueChange = setValue,
                 textStyle = TextStyle(
                     fontFamily = interFontFamily,
                     fontWeight = FontWeight.Medium,
@@ -115,8 +103,8 @@ fun AddNewBusinessScreen(
                     color = Color.Black,
                 ),
                 modifier = Modifier.padding(horizontal = 16.dp),
-                title = "Secret key",
-                placeholder = "sk_prod_",
+                title = "Filter",
+                placeholder = "Enter your filter here",
                 borderColor = Color(0xFFC0C8D2),
                 placeholderColor = Color(0xFF87909F),
                 keyboardOptions = KeyboardOptions(
@@ -124,18 +112,31 @@ fun AddNewBusinessScreen(
                 )
             )
 
+            Gap(height = 8.dp)
+
+            Text(
+                text = "Match exact string or regular expression by wrapping it with \"/\" like /regex/.",
+                fontFamily = interFontFamily,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                color = Color(0xFF545969),
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+
+            Gap(height = 30.dp)
+
+
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.BottomCenter) {
                 XButton(
-                    text = "Add business",
+                    text = "Add filter",
                     enabled = buttonEnabled,
-                    loading = state.loading,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
                 ) {
-                    viewModel.verify(
-                        accessKey = accessKey.text,
-                        secretKey = secretKey.text,
+                    viewModel.createFilter(
+                        sender = sender.text,
+                        value = value.text,
                     ) {
-                        navigator.navigate(AllDoneScreenDestination)
+                        navigator.navigateUp()
                     }
                 }
             }

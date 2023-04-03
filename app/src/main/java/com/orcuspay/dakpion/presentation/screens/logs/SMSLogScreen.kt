@@ -81,7 +81,7 @@ fun SMSLogScreen(
                             .padding(start = 16.dp)
                             .clip(CircleShape)
                             .background(
-                                if (i == selectedCredential) Color(0xFFF2EBFF)
+                                if (i == selectedCredential) Color(0xFFD7F7C2)
                                 else Color(0xFFF6F8FA)
                             ),
                         verticalAlignment = Alignment.CenterVertically,
@@ -96,8 +96,8 @@ fun SMSLogScreen(
                                     .background(
                                         brush = Brush.linearGradient(
                                             colors = listOf(
-                                                MaterialTheme.colors.primary,
-                                                MaterialTheme.colors.primaryVariant
+                                                Color(0xFF00FF47),
+                                                Color(0xFF0038FF)
                                             )
                                         )
                                     )
@@ -287,6 +287,7 @@ fun SMSStatusBadge(
         SMSStatus.NOT_STORED -> Color(0xFFFCEDB9)
         SMSStatus.UNAUTHORIZED -> Color(0xFFFFE7F2)
         SMSStatus.DUPLICATE -> Color(0xFFFFE7F2)
+        SMSStatus.FILTERED -> Color(0xFFFCEDB9)
     }
 
     Row(modifier = modifier) {
@@ -303,6 +304,7 @@ fun SMSStatusBadge(
                 SMSStatus.NOT_STORED -> "NOT STORED IN DB"
                 SMSStatus.UNAUTHORIZED -> "UNAUTHORIZED"
                 SMSStatus.DUPLICATE -> "DUPLICATE"
+                SMSStatus.FILTERED -> "FILTERED"
             }
 
             val color = when (status) {
@@ -312,6 +314,7 @@ fun SMSStatusBadge(
                 SMSStatus.NOT_STORED -> Color(0xFF5F1A05)
                 SMSStatus.UNAUTHORIZED -> Color(0xFF68052B)
                 SMSStatus.DUPLICATE -> Color(0xFF68052B)
+                SMSStatus.FILTERED -> Color(0xFF5F1A05)
             }
 
             Text(

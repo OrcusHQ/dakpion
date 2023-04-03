@@ -5,10 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,9 +40,9 @@ fun XButton(
         enabled = enabled,
         shape = CircleShape,
         colors = ButtonDefaults.buttonColors(
-            backgroundColor = Color(0xFFD1BEFE),
-            contentColor = Color(0xFF102C60),
-            disabledBackgroundColor = Color(0xFFD1BEFE).copy(alpha = 0.5f),
+            backgroundColor = MaterialTheme.colors.primary,
+            contentColor = MaterialTheme.colors.onPrimary,
+            disabledBackgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.5f),
             disabledContentColor = Color.White
         ),
         contentPadding = contentPadding,
@@ -60,7 +57,7 @@ fun XButton(
                     fontFamily = interFontFamily,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF102C60)
+                    color = MaterialTheme.colors.onPrimary
                 )
             )
         } else {

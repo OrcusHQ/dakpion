@@ -11,7 +11,6 @@ fun VerifyRequest.toVerifyRequestDto(): VerifyRequestDto {
     return VerifyRequestDto(
         accessKey = accessKey,
         secretKey = secretKey,
-        mode = if (mode == Mode.LIVE) "prod" else "test"
     )
 }
 

@@ -11,6 +11,7 @@ import com.orcuspay.dakpion.data.mapper.toCredential
 import com.orcuspay.dakpion.data.mapper.toSMSEntity
 import com.orcuspay.dakpion.domain.model.SMS
 import com.orcuspay.dakpion.domain.model.SMSStatus
+import com.orcuspay.dakpion.domain.repository.FilterRepository
 import com.orcuspay.dakpion.domain.repository.SmsRepository
 import java.util.*
 import javax.inject.Inject
@@ -21,6 +22,7 @@ import javax.inject.Singleton
 class SmsRepositoryImp @Inject constructor(
     application: Application,
     db: DakpionDatabase,
+    private val filterRepository: FilterRepository,
 ) : SmsRepository {
 
     private val dao = db.dao
@@ -28,6 +30,7 @@ class SmsRepositoryImp @Inject constructor(
 
     override suspend fun loadSMSAfter(after: Date) {
         val credentials = dao.getCredentials().map { it.toCredential() }
+        val filters = filterRepository.getEnabledFilters()
         val contentResolver: ContentResolver = context.contentResolver
 
         val selection = "${Telephony.Sms.Inbox.DATE} >= ?"
@@ -60,33 +63,47 @@ class SmsRepositoryImp @Inject constructor(
             val date = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.Inbox.DATE))
             val body = cursor.getString(cursor.getColumnIndex(Telephony.Sms.Inbox.BODY))
 
-            credentials.forEach {
-                val sms = SMS(
+            credentials.forEach { credential ->
+                var sms = SMS(
                     smsId = id,
-                    credentialId = it.id,
+                    credentialId = credential.id,
                     sender = creator,
                     date = Date(date),
                     body = body,
                     status = SMSStatus.PROCESSING,
                 )
 
-                val filters = listOf(
+                val supportedSenders = listOf(
                     "bKash",
                     "nagad",
                     "upay",
-                    "16216"
+                    "16216",
+                    "IBBL",
                 )
 
                 if (
-                    filters.any { f ->
+                    supportedSenders.any { f ->
                         sms.sender.lowercase().contains(f.lowercase())
-                    }
+                    } && credential.enabled
                 ) {
-                    if (it.enabled) {
-                        val smsEntity = sms.toSMSEntity()
-                        Log.d("kraken", "Created $smsEntity")
-                        dao.createSMS(smsEntity)
+
+                    if (sms.sender.lowercase().contains("ibbl")) {
+                        if (!sms.body.lowercase().contains("cellfin")) {
+                            return
+                        }
                     }
+
+                    if (filters.filter { filter ->
+                            filter.sender == null || filter.sender.lowercase() == sms.sender.lowercase()
+                        }.any { filter ->
+                            filter.match(sms.body)
+                        }) {
+                        sms = sms.copy(status = SMSStatus.FILTERED)
+                    }
+
+                    val smsEntity = sms.toSMSEntity()
+                    Log.d("kraken", "Created $smsEntity")
+                    dao.createSMS(smsEntity)
                 }
             }
 

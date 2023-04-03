@@ -48,7 +48,7 @@ fun XTextField(
     val isFocused by interactionSource.collectIsFocusedAsState()
 
     val currentBorderColor = if (isFocused)
-        Color(0xFF302476)
+        Color(0xFF043B15)
     else borderColor
     val currentBorderWidth = if (isFocused) 3.dp else 1.dp
 

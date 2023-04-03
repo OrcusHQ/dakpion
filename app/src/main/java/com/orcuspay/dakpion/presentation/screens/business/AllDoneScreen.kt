@@ -51,7 +51,7 @@ fun AllDoneScreen(
         )
         Gap(height = 8.dp)
         Text(
-            text = "We will be forwarding your transactional SMSs",
+            text = "We will be forwarding your transactional SMSs.",
             fontSize = 16.sp,
             color = Color(0xFF545969),
             fontFamily = interFontFamily,

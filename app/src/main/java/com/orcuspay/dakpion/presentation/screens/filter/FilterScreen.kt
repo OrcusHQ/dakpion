@@ -1,4 +1,4 @@
-package com.orcuspay.dakpion.presentation.screens.home
+package com.orcuspay.dakpion.presentation.screens.filter
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -26,9 +26,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.orcuspay.dakpion.R
-import com.orcuspay.dakpion.domain.model.Credential
+import com.orcuspay.dakpion.domain.model.Filter
 import com.orcuspay.dakpion.presentation.composables.*
-import com.orcuspay.dakpion.presentation.destinations.AddNewBusinessScreenDestination
+import com.orcuspay.dakpion.presentation.destinations.AddNewFilterScreenDestination
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -37,21 +37,21 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterialApi::class)
 @Destination
 @Composable
-fun HomeScreen(
-    viewModel: HomeViewModel = hiltViewModel(),
+fun FilterScreen(
     navigator: DestinationsNavigator,
+    viewModel: FilterViewModel = hiltViewModel()
 ) {
 
-    val credentials by viewModel.getCredentials().observeAsState(initial = listOf())
+    val filters by viewModel.filtersLiveData.observeAsState(initial = listOf())
     val scope = rememberCoroutineScope()
 
     Scaffold(
         modifier = Modifier,
         topBar = {
             TopBar(
-                title = "Business",
+                title = "Filters",
                 actionButton = {
-                    if (credentials.isNotEmpty())
+                    if (filters.isNotEmpty())
                         XButton(
                             text = "Add",
                             style = TextStyle(
@@ -67,16 +67,16 @@ fun HomeScreen(
                             modifier = Modifier
                                 .padding(end = 16.dp)
                         ) {
-                            navigator.navigate(AddNewBusinessScreenDestination)
+                            navigator.navigate(AddNewFilterScreenDestination)
                         }
                 }
             )
         },
         floatingActionButton = {
-            if (credentials.isEmpty())
+            if (filters.isEmpty())
                 FloatingActionButton(
                     onClick = {
-                        navigator.navigate(AddNewBusinessScreenDestination)
+                        navigator.navigate(AddNewFilterScreenDestination)
                     },
                     shape = CircleShape,
                     backgroundColor = MaterialTheme.colors.primary,
@@ -99,7 +99,7 @@ fun HomeScreen(
         },
         floatingActionButtonPosition = FabPosition.Center,
     ) { pv ->
-        var credentialToDelete: Credential? by remember { mutableStateOf(null) }
+        var filterToDelete: Filter? by remember { mutableStateOf(null) }
         var dismissing by remember {
             mutableStateOf(false)
         }
@@ -107,10 +107,10 @@ fun HomeScreen(
             mutableStateOf({})
         }
 
-        if (credentialToDelete != null) {
+        if (filterToDelete != null) {
             Dialog(
                 onDismissRequest = {
-                    credentialToDelete = null
+                    filterToDelete = null
                     onDismissCallback()
                 },
                 properties = DialogProperties(
@@ -118,14 +118,14 @@ fun HomeScreen(
                 )
             ) {
                 ConfirmDialog(
-                    title = "Are you sure you want to delete this business?",
+                    title = "Are you sure you want to delete this filter?",
                     onCancel = {
-                        credentialToDelete = null
+                        filterToDelete = null
                         onDismissCallback()
                     }
                 ) {
-                    viewModel.deleteCredential(credentialToDelete!!)
-                    credentialToDelete = null
+                    viewModel.deleteFilter(filterToDelete!!)
+                    filterToDelete = null
                     onDismissCallback()
                 }
             }
@@ -139,19 +139,19 @@ fun HomeScreen(
             horizontalAlignment = Alignment.Start
         ) {
 
-            if (credentials.isNotEmpty()) {
+            if (filters.isNotEmpty()) {
                 LazyColumn {
-                    items(credentials.size, key = {
-                        credentials[it].id
+                    items(filters.size, key = {
+                        filters[it].id
                     }) { i ->
-                        val credential = credentials[i]
+                        val filter = filters[i]
 
                         val dismissState = rememberDismissState()
 
                         if (
                             dismissState.isDismissed(DismissDirection.EndToStart) && !dismissing
                         ) {
-                            credentialToDelete = credential
+                            filterToDelete = filter
                             onDismissCallback = {
                                 scope.launch {
                                     dismissing = true
@@ -215,10 +215,10 @@ fun HomeScreen(
                                 }
                             },
                         ) {
-                            CredentialCard(
-                                credential = credential,
+                            FilterCard(
+                                filter = filter,
                             ) {
-                                viewModel.setCredentialEnabled(credential, it)
+                                viewModel.setFilterEnabled(filter, it)
                             }
                         }
                     }
@@ -250,7 +250,7 @@ fun HomeScreen(
                     )
                     Gap(height = 8.dp)
                     Text(
-                        text = "Add a new account",
+                        text = "You can use filters to exclude messages",
                         fontFamily = interFontFamily,
                         color = Color(0xFF545969),
                         textAlign = TextAlign.Center,

@@ -41,7 +41,7 @@ fun TopBar(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.ic_back),
-                        contentDescription = "Go back"
+                        contentDescription = "Go back",
                     )
                 }
             }

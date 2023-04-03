@@ -22,6 +22,7 @@ import com.orcuspay.dakpion.R
 val NavigationItems = listOf(
     NavigationItem("home", R.drawable.ic_home, "Home"),
     NavigationItem("logs", R.drawable.ic_clipboard, "Logs"),
+    NavigationItem("filters", R.drawable.ic_filter, "Filters"),
 )
 
 @Composable
@@ -72,7 +73,7 @@ fun BottomNavigationBar(
                         )
                     }
                 },
-                selectedContentColor = Color(0xFF102C60),
+                selectedContentColor = Color(0xFF043B15),
                 unselectedContentColor = Color(0xFFA3ACBA),
                 alwaysShowLabel = true,
                 selected = selected,

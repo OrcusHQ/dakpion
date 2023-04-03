@@ -34,7 +34,7 @@ class DakpionRepositoryImp @Inject constructor(
             if (verifyResponse != null) {
 
                 if (credentials.any {
-                        it.credentialId == verifyResponse.id && it.mode == verifyRequest.mode
+                        it.credentialId == verifyResponse.id && it.mode == verifyResponse.mode
                     }
                 ) {
                     ApiResult.Error(
@@ -46,7 +46,7 @@ class DakpionRepositoryImp @Inject constructor(
                         CredentialEntity(
                             accessKey = verifyRequest.accessKey,
                             secretKey = verifyRequest.secretKey,
-                            mode = verifyRequest.mode,
+                            mode = verifyResponse.mode,
                             credentialId = verifyResponse.id,
                             businessName = verifyResponse.name,
                             enabled = true,
@@ -168,7 +168,6 @@ class DakpionRepositoryImp @Inject constructor(
                 VerifyRequest(
                     accessKey = credential.accessKey,
                     secretKey = credential.secretKey,
-                    mode = credential.mode
                 ).toVerifyRequestDto()
             )
 

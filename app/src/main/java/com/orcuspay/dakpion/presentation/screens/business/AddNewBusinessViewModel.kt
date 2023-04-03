@@ -23,7 +23,6 @@ class AddNewBusinessViewModel @Inject constructor(
     fun verify(
         accessKey: String,
         secretKey: String,
-        isTestMode: Boolean,
         onSuccess: () -> Unit,
     ) {
         viewModelScope.launch {
@@ -32,7 +31,6 @@ class AddNewBusinessViewModel @Inject constructor(
                 VerifyRequest(
                     accessKey = accessKey,
                     secretKey = secretKey,
-                    mode = if (isTestMode) Mode.TEST else Mode.LIVE
                 )
             )
             when (result) {

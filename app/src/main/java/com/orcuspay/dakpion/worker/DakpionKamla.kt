@@ -49,8 +49,7 @@ class DakpionKamla @AssistedInject constructor(
                 if (credential.enabled) {
                     smsList
                         .filter {
-                            (it.status == SMSStatus.PROCESSING ||
-                                    it.status == SMSStatus.ERROR) && it.status != SMSStatus.DUPLICATE
+                            (it.status == SMSStatus.PROCESSING || it.status == SMSStatus.ERROR)
                         }
                         .forEach { sms ->
                             val result = dakpionRepository.send(

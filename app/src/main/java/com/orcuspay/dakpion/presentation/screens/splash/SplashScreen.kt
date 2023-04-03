@@ -61,7 +61,7 @@ fun SplashScreen(
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator(
             modifier = Modifier.size(48.dp),
-            color = Color(0xFF102C60)
+            color = MaterialTheme.colors.primary
         )
     }
 }

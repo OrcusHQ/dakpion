@@ -1,6 +1,5 @@
 package com.orcuspay.dakpion.presentation.composables
 
-import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -57,7 +56,7 @@ fun XSwitch(
             .size(width = 50.dp, height = 30.dp)
             .clip(RoundedCornerShape(99.dp))
             .background(
-                if (value) MaterialTheme.colors.primaryVariant else Color(0xFFEBEEF1)
+                if (value) MaterialTheme.colors.primary else Color(0xFFEBEEF1)
             )
             .clickable(
                 indication = null,
