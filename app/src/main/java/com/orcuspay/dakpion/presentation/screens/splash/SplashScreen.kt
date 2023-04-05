@@ -1,6 +1,7 @@
 package com.orcuspay.dakpion.presentation.screens.splash
 
 import android.Manifest
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -11,12 +12,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
+import com.orcuspay.dakpion.R
 import com.orcuspay.dakpion.presentation.destinations.ContainerScreenDestination
 import com.orcuspay.dakpion.presentation.destinations.OnboardScreenDestination
 import com.orcuspay.dakpion.presentation.destinations.SplashScreenDestination
@@ -59,9 +62,10 @@ fun SplashScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(48.dp),
-            color = MaterialTheme.colors.primary
+        Image(
+            painterResource(id = R.drawable.onboarding),
+            contentDescription = null,
+            modifier = Modifier.size(100.dp)
         )
     }
 }

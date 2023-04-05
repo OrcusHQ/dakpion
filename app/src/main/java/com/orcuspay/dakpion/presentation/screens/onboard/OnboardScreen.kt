@@ -9,8 +9,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -18,8 +22,10 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.orcuspay.dakpion.R
 import com.orcuspay.dakpion.presentation.composables.Gap
+import com.orcuspay.dakpion.presentation.composables.OnboardingAgreementFooter
 import com.orcuspay.dakpion.presentation.composables.XButton
 import com.orcuspay.dakpion.presentation.destinations.ContainerScreenDestination
+import com.orcuspay.dakpion.presentation.destinations.DisclosureScreenDestination
 import com.orcuspay.dakpion.presentation.destinations.OnboardScreenDestination
 import com.orcuspay.dakpion.presentation.theme.gilroyFontFamily
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
@@ -35,21 +41,6 @@ fun OnboardScreen(
     viewModel: OnboardViewModel = hiltViewModel()
 ) {
 
-    val smsPermissionState = rememberMultiplePermissionsState(
-        listOf(
-            android.Manifest.permission.READ_SMS,
-            android.Manifest.permission.RECEIVE_SMS,
-        )
-    ) {
-        if (it.all { p -> p.value }) {
-            navigator.navigate(ContainerScreenDestination) {
-                popUpTo(OnboardScreenDestination) {
-                    inclusive = true
-                }
-            }
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -57,11 +48,11 @@ fun OnboardScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        Gap(height = 120.dp)
+        Gap(height = 60.dp)
         Image(
             painter = painterResource(id = R.drawable.onboarding),
             contentDescription = "",
-            modifier = Modifier.size(175.dp),
+            modifier = Modifier.size(width = 235.dp, height = 230.dp),
             contentScale = ContentScale.FillWidth
         )
         Gap(height = 24.dp)
@@ -75,22 +66,32 @@ fun OnboardScreen(
         )
         Gap(height = 8.dp)
         Text(
-            text = "Let Dakpion access your transactional SMSs to integrate with OrcusPay.",
+            text = "Configure Dakpion to start automating your payments with Orcus.",
             fontSize = 16.sp,
             color = Color(0xFF545969),
             fontFamily = interFontFamily,
             fontWeight = FontWeight.Normal,
             textAlign = TextAlign.Center,
+            lineHeight = 22.sp
         )
         Box(
             modifier = Modifier.weight(1f),
             contentAlignment = Alignment.BottomCenter
         ) {
-            XButton(
-                text = "Continue",
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom
             ) {
-                smsPermissionState.launchMultiplePermissionRequest()
-                viewModel.addDefaultFilters()
+                XButton(
+                    text = "Continue",
+                ) {
+                    viewModel.addDefaultFilters()
+                    navigator.navigate(DisclosureScreenDestination)
+                }
+
+                Gap(height = 16.dp)
+
+                OnboardingAgreementFooter()
             }
         }
     }
