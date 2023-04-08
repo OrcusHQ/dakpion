@@ -2,6 +2,8 @@ package com.orcuspay.dakpion.presentation.screens.onboard
 
 import android.Manifest
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -63,9 +65,15 @@ fun DisclosureScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-
-            Text(
-                text = """
+            Column(
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Top,
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .weight(1f)
+            ) {
+                Text(
+                    text = """
                     Our payment automation app requires access to your SMS messages to accurately track your payment transactions.
 
                     We understand that privacy is of utmost importance to you, and we take every measure to protect your data. To ensure this, we process only transactional messages from specific, Orcus-supported senders.
@@ -74,31 +82,28 @@ fun DisclosureScreen(
 
                     Rest assured that your payment transactions are safe and secure with our payment automation app.
                 """.trimIndent(),
-                fontSize = 16.sp,
-                color = Color(0xFF545969),
-                fontFamily = interFontFamily,
-                fontWeight = FontWeight.Normal,
-                textAlign = TextAlign.Left,
-                lineHeight = 22.sp
-            )
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.BottomCenter
+                    fontSize = 16.sp,
+                    color = Color(0xFF545969),
+                    fontFamily = interFontFamily,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Left,
+                    lineHeight = 22.sp,
+                )
+            }
+            Gap(height = 20.dp)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Bottom
+                XButton(
+                    text = "Give SMS permission",
                 ) {
-                    XButton(
-                        text = "Give SMS permission",
-                    ) {
-                        smsPermissionState.launchMultiplePermissionRequest()
-                    }
-
-                    Gap(height = 16.dp)
-
-                    OnboardingAgreementFooter()
+                    smsPermissionState.launchMultiplePermissionRequest()
                 }
+
+                Gap(height = 16.dp)
+
+                OnboardingAgreementFooter()
             }
         }
     }

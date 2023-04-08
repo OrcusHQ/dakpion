@@ -2,8 +2,10 @@ package com.orcuspay.dakpion.presentation.screens.business
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -60,83 +62,91 @@ fun AddNewBusinessScreen(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-            Gap(height = 30.dp)
 
-            if (state.error != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0xFFFFE7F2)),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    Text(
-                        text = state.error,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 18.sp,
-                        fontFamily = interFontFamily,
-                        color = Color(0xFF890D37),
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-                Gap(height = 24.dp)
-            }
+            Column(
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Top,
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Gap(height = 30.dp)
 
-
-            XTextField(
-                value = accessKey,
-                onValueChange = setAccessKey,
-                textStyle = TextStyle(
-                    fontFamily = interFontFamily,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 17.sp,
-                    color = Color.Black,
-                ),
-                modifier = Modifier.padding(horizontal = 16.dp),
-                title = "Access key",
-                placeholder = "ak_prod_",
-                borderColor = Color(0xFFC0C8D2),
-                placeholderColor = Color(0xFF87909F),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Next
-                )
-            )
-
-            Gap(height = 24.dp)
-
-            XTextField(
-                value = secretKey,
-                onValueChange = setSecretKey,
-                textStyle = TextStyle(
-                    fontFamily = interFontFamily,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 17.sp,
-                    color = Color.Black,
-                ),
-                modifier = Modifier.padding(horizontal = 16.dp),
-                title = "Secret key",
-                placeholder = "sk_prod_",
-                borderColor = Color(0xFFC0C8D2),
-                placeholderColor = Color(0xFF87909F),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Done
-                )
-            )
-
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.BottomCenter) {
-                XButton(
-                    text = "Add business",
-                    enabled = buttonEnabled,
-                    loading = state.loading,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
-                ) {
-                    viewModel.verify(
-                        accessKey = accessKey.text,
-                        secretKey = secretKey.text,
+                if (state.error != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFFFFE7F2)),
+                        contentAlignment = Alignment.CenterStart
                     ) {
-                        navigator.navigate(AllDoneScreenDestination)
+                        Text(
+                            text = state.error,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 18.sp,
+                            fontFamily = interFontFamily,
+                            color = Color(0xFF890D37),
+                            modifier = Modifier.padding(16.dp)
+                        )
                     }
+                    Gap(height = 24.dp)
+                }
+
+
+                XTextField(
+                    value = accessKey,
+                    onValueChange = setAccessKey,
+                    textStyle = TextStyle(
+                        fontFamily = interFontFamily,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 17.sp,
+                        color = Color.Black,
+                    ),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    title = "Access key",
+                    placeholder = "ak_prod_",
+                    borderColor = Color(0xFFC0C8D2),
+                    placeholderColor = Color(0xFF87909F),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Next
+                    )
+                )
+
+                Gap(height = 24.dp)
+
+                XTextField(
+                    value = secretKey,
+                    onValueChange = setSecretKey,
+                    textStyle = TextStyle(
+                        fontFamily = interFontFamily,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 17.sp,
+                        color = Color.Black,
+                    ),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    title = "Secret key",
+                    placeholder = "sk_prod_",
+                    borderColor = Color(0xFFC0C8D2),
+                    placeholderColor = Color(0xFF87909F),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done
+                    )
+                )
+                Gap(height = 16.dp)
+            }
+            Gap(height = 16.dp)
+            XButton(
+                text = "Add business",
+                enabled = buttonEnabled,
+                loading = state.loading,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+            ) {
+                viewModel.verify(
+                    accessKey = accessKey.text,
+                    secretKey = secretKey.text,
+                ) {
+                    navigator.navigate(AllDoneScreenDestination)
                 }
             }
         }

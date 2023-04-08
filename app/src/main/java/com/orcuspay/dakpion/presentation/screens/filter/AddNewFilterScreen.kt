@@ -1,7 +1,9 @@
 package com.orcuspay.dakpion.presentation.screens.filter
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -59,85 +61,87 @@ fun AddNewFilterScreen(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-            Gap(height = 30.dp)
 
-            XTextField(
-                value = sender,
-                onValueChange = setSender,
-                textStyle = TextStyle(
-                    fontFamily = interFontFamily,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 17.sp,
-                    color = Color.Black,
-                ),
-                modifier = Modifier.padding(horizontal = 16.dp),
-                title = "Sender",
-                placeholder = "bKash",
-                borderColor = Color(0xFFC0C8D2),
-                placeholderColor = Color(0xFF87909F),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Next
+            Column(
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Top,
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Gap(height = 30.dp)
+                XTextField(
+                    value = sender,
+                    onValueChange = setSender,
+                    textStyle = TextStyle(
+                        fontFamily = interFontFamily,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 17.sp,
+                        color = Color.Black,
+                    ),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    title = "Sender",
+                    placeholder = "bKash",
+                    borderColor = Color(0xFFC0C8D2),
+                    placeholderColor = Color(0xFF87909F),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Next
+                    )
                 )
-            )
 
-            Gap(height = 8.dp)
+                Gap(height = 8.dp)
 
-            Text(
-                text = "If empty, this filter applies to all messages from all senders.",
-                fontFamily = interFontFamily,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
-                color = Color(0xFF545969),
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-
-            Gap(height = 24.dp)
-
-            XTextField(
-                value = value,
-                onValueChange = setValue,
-                textStyle = TextStyle(
+                Text(
+                    text = "If empty, this filter applies to all messages from all senders.",
                     fontFamily = interFontFamily,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 17.sp,
-                    color = Color.Black,
-                ),
-                modifier = Modifier.padding(horizontal = 16.dp),
-                title = "Filter",
-                placeholder = "Enter your filter here",
-                borderColor = Color(0xFFC0C8D2),
-                placeholderColor = Color(0xFF87909F),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Done
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 14.sp,
+                    color = Color(0xFF545969),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
-            )
+                Gap(height = 24.dp)
 
-            Gap(height = 8.dp)
+                XTextField(
+                    value = value,
+                    onValueChange = setValue,
+                    textStyle = TextStyle(
+                        fontFamily = interFontFamily,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 17.sp,
+                        color = Color.Black,
+                    ),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    title = "Filter",
+                    placeholder = "Enter your filter here",
+                    borderColor = Color(0xFFC0C8D2),
+                    placeholderColor = Color(0xFF87909F),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done
+                    )
+                )
+                Gap(height = 8.dp)
 
-            Text(
-                text = "Match exact string or regular expression by wrapping it with \"/\" like /regex/.",
-                fontFamily = interFontFamily,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
-                color = Color(0xFF545969),
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-
-            Gap(height = 30.dp)
-
-
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.BottomCenter) {
-                XButton(
-                    text = "Add filter",
-                    enabled = buttonEnabled,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+                Text(
+                    text = "Match exact string or regular expression by wrapping it with \"/\" like /regex/.",
+                    fontFamily = interFontFamily,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 14.sp,
+                    color = Color(0xFF545969),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+                Gap(height = 16.dp)
+            }
+            Gap(height = 16.dp)
+            XButton(
+                text = "Add filter",
+                enabled = buttonEnabled,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+            ) {
+                viewModel.createFilter(
+                    sender = sender.text,
+                    value = value.text,
                 ) {
-                    viewModel.createFilter(
-                        sender = sender.text,
-                        value = value.text,
-                    ) {
-                        navigator.navigateUp()
-                    }
+                    navigator.navigateUp()
                 }
             }
         }
