@@ -1,15 +1,16 @@
 package com.orcuspay.dakpion.presentation.screens.onboard
 
 import android.Manifest
+import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -20,8 +21,8 @@ import com.orcuspay.dakpion.presentation.composables.Gap
 import com.orcuspay.dakpion.presentation.composables.OnboardingAgreementFooter
 import com.orcuspay.dakpion.presentation.composables.TopBar
 import com.orcuspay.dakpion.presentation.composables.XButton
-import com.orcuspay.dakpion.presentation.destinations.ContainerScreenDestination
-import com.orcuspay.dakpion.presentation.destinations.OnboardScreenDestination
+import com.orcuspay.dakpion.presentation.screens.destinations.ContainerScreenDestination
+import com.orcuspay.dakpion.presentation.screens.destinations.OnboardScreenDestination
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -34,16 +35,23 @@ import com.ramcosta.composedestinations.navigation.popUpTo
 fun DisclosureScreen(
     navigator: DestinationsNavigator,
 ) {
-    val smsPermissionState = rememberMultiplePermissionsState(
-        listOf(
-            Manifest.permission.READ_SMS,
-            Manifest.permission.RECEIVE_SMS,
-        )
-    ) {
-        if (it.all { p -> p.value }) {
-            navigator.navigate(ContainerScreenDestination) {
-                popUpTo(OnboardScreenDestination) {
-                    inclusive = true
+    val permissions = mutableListOf(
+        Manifest.permission.READ_SMS,
+        Manifest.permission.RECEIVE_SMS,
+    )
+    
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    val permissionsState = rememberMultiplePermissionsState(permissions) {
+        if (it.all { p -> p.value || (p.key == Manifest.permission.POST_NOTIFICATIONS) }) {
+            // We proceed if SMS is granted. Notifications are optional but requested.
+            if (it[Manifest.permission.READ_SMS] == true && it[Manifest.permission.RECEIVE_SMS] == true) {
+                navigator.navigate(ContainerScreenDestination) {
+                    popUpTo(OnboardScreenDestination) {
+                        inclusive = true
+                    }
                 }
             }
         }
@@ -73,6 +81,15 @@ fun DisclosureScreen(
                     .weight(1f)
             ) {
                 Text(
+                    text = "Privacy & Permissions",
+                    fontSize = 24.sp,
+                    fontFamily = interFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colors.onBackground,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Text(
                     text = """
                     Our payment automation app requires access to your SMS messages to accurately track your payment transactions.
 
@@ -80,10 +97,12 @@ fun DisclosureScreen(
 
                     All data is transmitted securely to our servers, and we do not collect any personal information from your SMS messages. You can view which messages are being sent and stored on our server through the app log, giving you full transparency.
 
+                    On Android 13+, we also request permission to show notifications so you can stay updated on your transaction sync status.
+
                     Rest assured that your payment transactions are safe and secure with our payment automation app.
                 """.trimIndent(),
                     fontSize = 16.sp,
-                    color = Color(0xFF545969),
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
                     fontFamily = interFontFamily,
                     fontWeight = FontWeight.Normal,
                     textAlign = TextAlign.Left,
@@ -96,9 +115,9 @@ fun DisclosureScreen(
                 verticalArrangement = Arrangement.Bottom
             ) {
                 XButton(
-                    text = "Give SMS permission",
+                    text = "Accept & Continue",
                 ) {
-                    smsPermissionState.launchMultiplePermissionRequest()
+                    permissionsState.launchMultiplePermissionRequest()
                 }
 
                 Gap(height = 16.dp)

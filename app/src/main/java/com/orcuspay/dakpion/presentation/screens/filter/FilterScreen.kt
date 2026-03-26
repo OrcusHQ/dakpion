@@ -28,7 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.orcuspay.dakpion.R
 import com.orcuspay.dakpion.domain.model.Filter
 import com.orcuspay.dakpion.presentation.composables.*
-import com.orcuspay.dakpion.presentation.destinations.AddNewFilterScreenDestination
+import com.orcuspay.dakpion.presentation.screens.destinations.AddNewFilterScreenDestination
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator

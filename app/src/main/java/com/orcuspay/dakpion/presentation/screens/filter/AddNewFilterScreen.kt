@@ -23,7 +23,7 @@ import com.orcuspay.dakpion.presentation.composables.Gap
 import com.orcuspay.dakpion.presentation.composables.TopBar
 import com.orcuspay.dakpion.presentation.composables.XButton
 import com.orcuspay.dakpion.presentation.composables.XTextField
-import com.orcuspay.dakpion.presentation.destinations.AllDoneScreenDestination
+import com.orcuspay.dakpion.presentation.screens.destinations.AllDoneScreenDestination
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator

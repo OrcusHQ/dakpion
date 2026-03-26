@@ -20,9 +20,9 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.orcuspay.dakpion.R
-import com.orcuspay.dakpion.presentation.destinations.ContainerScreenDestination
-import com.orcuspay.dakpion.presentation.destinations.OnboardScreenDestination
-import com.orcuspay.dakpion.presentation.destinations.SplashScreenDestination
+import com.orcuspay.dakpion.presentation.screens.destinations.ContainerScreenDestination
+import com.orcuspay.dakpion.presentation.screens.destinations.OnboardScreenDestination
+import com.orcuspay.dakpion.presentation.screens.destinations.SplashScreenDestination
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator

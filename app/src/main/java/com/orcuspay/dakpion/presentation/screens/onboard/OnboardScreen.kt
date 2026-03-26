@@ -24,9 +24,9 @@ import com.orcuspay.dakpion.R
 import com.orcuspay.dakpion.presentation.composables.Gap
 import com.orcuspay.dakpion.presentation.composables.OnboardingAgreementFooter
 import com.orcuspay.dakpion.presentation.composables.XButton
-import com.orcuspay.dakpion.presentation.destinations.ContainerScreenDestination
-import com.orcuspay.dakpion.presentation.destinations.DisclosureScreenDestination
-import com.orcuspay.dakpion.presentation.destinations.OnboardScreenDestination
+import com.orcuspay.dakpion.presentation.screens.destinations.ContainerScreenDestination
+import com.orcuspay.dakpion.presentation.screens.destinations.DisclosureScreenDestination
+import com.orcuspay.dakpion.presentation.screens.destinations.OnboardScreenDestination
 import com.orcuspay.dakpion.presentation.theme.gilroyFontFamily
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
