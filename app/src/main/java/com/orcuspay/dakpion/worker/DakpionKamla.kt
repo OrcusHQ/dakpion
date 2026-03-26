@@ -42,6 +42,8 @@ class DakpionKamla @AssistedInject constructor(
             val credentialWithSMSList = dakpionRepository.getCredentialWithSMS()
 
             var hasError = false
+            var successCount = 0
+            
             credentialWithSMSList.forEach { cs ->
                 val credential = cs.credential
                 val smsList = cs.smsList
@@ -64,16 +66,24 @@ class DakpionKamla @AssistedInject constructor(
                                         notificationHelper.showNotification(
                                             notificationId = credential.id,
                                             title = "Invalid credential",
-                                            content = "${credential.businessName} has invalid credentials.  We have disabled it."
+                                            content = "${credential.businessName} has invalid credentials. We have disabled it."
                                         )
                                     }
                                 }
                                 is ApiResult.Success -> {
-
+                                    successCount++
                                 }
                             }
                         }
                 }
+            }
+
+            if (successCount > 0) {
+                notificationHelper.showNotification(
+                    notificationId = 999,
+                    title = "Sync Complete",
+                    content = "Successfully processed $successCount new transactions."
+                )
             }
 
             if (hasError) {

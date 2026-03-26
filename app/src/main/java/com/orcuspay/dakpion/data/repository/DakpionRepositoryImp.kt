@@ -1,7 +1,7 @@
 package com.orcuspay.dakpion.data.repository
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
+import androidx.lifecycle.map
 import com.orcuspay.dakpion.data.exception.DuplicateRequestException
 import com.orcuspay.dakpion.data.exception.InternalServerException
 import com.orcuspay.dakpion.data.exception.InvalidCredentialException
@@ -12,6 +12,8 @@ import com.orcuspay.dakpion.data.remote.ApiResult
 import com.orcuspay.dakpion.data.remote.DakpionApi
 import com.orcuspay.dakpion.domain.model.*
 import com.orcuspay.dakpion.domain.repository.DakpionRepository
+import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,9 +25,32 @@ class DakpionRepositoryImp @Inject constructor(
 
     private val dao = db.dao
 
-    override suspend fun verify(verifyRequest: VerifyRequest): ApiResult<VerifyResponse> {
+    private fun getErrorMessage(e: Throwable?): String {
+        return when (e) {
+            is HttpException -> {
+                when (e.code()) {
+                    502 -> "Server is temporarily unavailable (502). Please try again later."
+                    500 -> "Internal Server Error (500). Please contact support."
+                    404 -> "Service not found (404)."
+                    else -> "Network error: ${e.code()} ${e.message()}"
+                }
+            }
+            is IOException -> "Network timeout or connection issue. Please check your internet."
+            null -> "An unknown error occurred."
+            else -> e.message ?: "An unexpected error occurred."
+        }
+    }
 
-        val result = api.verify(verifyRequest.toVerifyRequestDto())
+    override suspend fun verify(verifyRequest: VerifyRequest): ApiResult<VerifyResponse> {
+        val result = try {
+            api.verify(verifyRequest.toVerifyRequestDto())
+        } catch (e: Exception) {
+            return ApiResult.Error(
+                message = getErrorMessage(e),
+                exception = e
+            )
+        }
+
         val credentials = dao.getCredentials()
 
         return if (result.isSuccess) {
@@ -60,13 +85,14 @@ class DakpionRepositoryImp @Inject constructor(
             } else {
                 ApiResult.Error(
                     exception = InternalServerException(),
-                    message = InternalServerException().message
+                    message = "Invalid response from server"
                 )
             }
         } else {
+            val exception = result.exceptionOrNull()
             ApiResult.Error(
-                message = result.exceptionOrNull()?.message,
-                exception = result.exceptionOrNull() as Exception
+                message = getErrorMessage(exception),
+                exception = exception as? Exception ?: Exception(getErrorMessage(exception))
             )
         }
     }
@@ -89,7 +115,19 @@ class DakpionRepositoryImp @Inject constructor(
             )
         }
 
-        val result = api.send(sendMessageRequest.toSendMessageRequestDto())
+        val result = try {
+            api.send(sendMessageRequest.toSendMessageRequestDto())
+        } catch (e: Exception) {
+            dao.updateSMS(
+                smsEntity = sms.copy(
+                    status = SMSStatus.ERROR
+                ).toSMSEntity()
+            )
+            return ApiResult.Error(
+                message = getErrorMessage(e),
+                exception = e
+            )
+        }
 
         if (result.isSuccess) {
             val response = result.getOrNull()
@@ -117,7 +155,7 @@ class DakpionRepositoryImp @Inject constructor(
                 )
                 return ApiResult.Error(
                     exception = InternalServerException(),
-                    message = InternalServerException().message
+                    message = "Invalid response from server"
                 )
             }
         } else {
@@ -143,7 +181,7 @@ class DakpionRepositoryImp @Inject constructor(
                             enabled = false
                         ).toCredentialEntity()
                     )
-                    return ApiResult.Error(exception = exception)
+                    return ApiResult.Error(exception = exception, message = "Invalid credentials")
                 }
                 else -> {
                     dao.updateSMS(
@@ -154,8 +192,8 @@ class DakpionRepositoryImp @Inject constructor(
                 }
             }
             return ApiResult.Error(
-                message = result.exceptionOrNull()?.message,
-                exception = result.exceptionOrNull() as Exception
+                message = getErrorMessage(exception),
+                exception = exception as? Exception ?: Exception(getErrorMessage(exception))
             )
         }
     }
@@ -164,12 +202,16 @@ class DakpionRepositoryImp @Inject constructor(
         val credentials = getCredentials()
 
         credentials.forEach { credential ->
-            val result = api.verify(
-                VerifyRequest(
-                    accessKey = credential.accessKey,
-                    secretKey = credential.secretKey,
-                ).toVerifyRequestDto()
-            )
+            val result = try {
+                api.verify(
+                    VerifyRequest(
+                        accessKey = credential.accessKey,
+                        secretKey = credential.secretKey,
+                    ).toVerifyRequestDto()
+                )
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
 
             if (result.isSuccess) {
                 val response = result.getOrNull()
@@ -202,7 +244,7 @@ class DakpionRepositoryImp @Inject constructor(
     }
 
     override fun getCredentialsLiveData(): LiveData<List<Credential>> {
-        return Transformations.map(dao.getCredentialsLiveData()) {
+        return dao.getCredentialsLiveData().map {
             it.map { ce ->
                 ce.toCredential()
             }
@@ -228,7 +270,7 @@ class DakpionRepositoryImp @Inject constructor(
     }
 
     override fun getCredentialWithSMSLiveData(): LiveData<List<CredentialWithSMS>> {
-        return Transformations.map(dao.getCredentialsWithSMSLiveData()) {
+        return dao.getCredentialsWithSMSLiveData().map {
             it.map { csms ->
                 csms.toCredentialWithSMS()
             }

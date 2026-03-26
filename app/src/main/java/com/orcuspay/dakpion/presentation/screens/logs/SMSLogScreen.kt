@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ import com.orcuspay.dakpion.R
 import com.orcuspay.dakpion.domain.model.SMSStatus
 import com.orcuspay.dakpion.presentation.composables.Gap
 import com.orcuspay.dakpion.presentation.composables.TopBar
+import com.orcuspay.dakpion.presentation.composables.XButton
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.orcuspay.dakpion.util.ifTrue
 import com.orcuspay.dakpion.util.toLogTimeFormat
@@ -45,7 +47,7 @@ fun SMSLogScreen(
     navigator: DestinationsNavigator,
     viewModel: SMSLogViewModel = hiltViewModel()
 ) {
-
+    val context = LocalContext.current
     val credentialWithSMSList by viewModel.getCredentialsWithSMS()
         .observeAsState(initial = listOf())
     val credentials = credentialWithSMSList.map { it.credential }
@@ -58,11 +60,37 @@ fun SMSLogScreen(
     Log.d("kraken", "Grouped: $groupedSMS")
     Scaffold(
         topBar = {
-            TopBar(title = "Logs")
+            TopBar(
+                title = "Logs",
+                actionButton = {
+                    if (smsList.isNotEmpty()) {
+                        XButton(
+                            text = "Export",
+                            style = TextStyle(
+                                fontFamily = interFontFamily,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colors.onPrimary,
+                                letterSpacing = 0.sp
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp),
+                            fillMaxWidth = false,
+                            height = 32.dp,
+                            modifier = Modifier.padding(end = 16.dp)
+                        ) {
+                            viewModel.exportToCsv(
+                                context = context,
+                                credentialName = credentials[selectedCredential].businessName,
+                                smsList = smsList
+                            )
+                        }
+                    }
+                }
+            )
         }
     ) { pv ->
         Column(
-            modifier = Modifier.padding(pv),
+            modifier = Modifier.padding(pv).background(MaterialTheme.colors.background),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Top,
         ) {
@@ -82,7 +110,7 @@ fun SMSLogScreen(
                             .clip(CircleShape)
                             .background(
                                 if (i == selectedCredential) Color(0xFFD7F7C2)
-                                else Color(0xFFF6F8FA)
+                                else MaterialTheme.colors.surface
                             ),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Start
@@ -121,7 +149,7 @@ fun SMSLogScreen(
                             text = credential.businessName,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.sp,
-                            color = Color.Black,
+                            color = if (i == selectedCredential) Color.Black else MaterialTheme.colors.onSurface,
                             fontFamily = interFontFamily,
                             modifier = Modifier.padding(end = 8.dp)
                         )
@@ -152,28 +180,28 @@ fun SMSLogScreen(
                         fontFamily = interFontFamily,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 22.sp,
-                        color = Color.Black,
+                        color = MaterialTheme.colors.onBackground,
                         textAlign = TextAlign.Center,
                     )
                     Gap(height = 8.dp)
                     Text(
                         text = "Your SMS logs will be here",
                         fontFamily = interFontFamily,
-                        color = Color(0xFF545969),
+                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
                         textAlign = TextAlign.Center,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
             } else {
-                LazyColumn {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
                     groupedSMS.forEach { (date, smsGroup) ->
                         item {
                             Text(
                                 text = date,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 15.sp,
-                                color = Color.Black,
+                                color = MaterialTheme.colors.onBackground,
                                 fontFamily = interFontFamily,
                                 modifier = Modifier.padding(
                                     start = 16.dp,
@@ -191,7 +219,7 @@ fun SMSLogScreen(
                                     .padding(horizontal = 16.dp, vertical = 5.dp)
                                     .border(
                                         width = 1.dp,
-                                        color = Color(0xFFEBEEF1),
+                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.1f),
                                         shape = RoundedCornerShape(12.dp)
                                     )
 
@@ -211,14 +239,14 @@ fun SMSLogScreen(
                                             fontFamily = interFontFamily,
                                             fontWeight = FontWeight.Medium,
                                             fontSize = 14.sp,
-                                            color = Color.Black
+                                            color = MaterialTheme.colors.onBackground
                                         )
                                         Text(
                                             text = sms.date.toLogTimeFormat(),
                                             fontFamily = interFontFamily,
                                             fontWeight = FontWeight.Normal,
                                             fontSize = 12.sp,
-                                            color = Color(0xFF545969)
+                                            color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
                                         )
                                     }
                                     Gap(height = 8.dp)
@@ -227,7 +255,7 @@ fun SMSLogScreen(
                                         fontFamily = interFontFamily,
                                         fontWeight = FontWeight.Normal,
                                         fontSize = 14.sp,
-                                        color = Color.Black
+                                        color = MaterialTheme.colors.onBackground
                                     )
                                     Gap(height = 8.dp)
                                     Row(

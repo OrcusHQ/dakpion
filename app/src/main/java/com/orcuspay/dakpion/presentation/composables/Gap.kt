@@ -7,10 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.ramcosta.composedestinations.annotation.Destination
 
 @Composable
-@Destination
 fun Gap(
     height: Dp = 0.dp,
     width: Dp = 0.dp,

@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,6 +42,7 @@ fun TopBar(
                     Image(
                         painter = painterResource(id = R.drawable.ic_back),
                         contentDescription = "Go back",
+                        colorFilter = ColorFilter.tint(MaterialTheme.colors.onBackground)
                     )
                 }
             }
@@ -56,7 +57,7 @@ fun TopBar(
             fontFamily = interFontFamily,
             fontWeight = FontWeight.SemiBold,
             fontSize = 30.sp,
-            color = Color.Black,
+            color = MaterialTheme.colors.onBackground,
             overflow = TextOverflow.Ellipsis
         )
 

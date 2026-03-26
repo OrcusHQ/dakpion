@@ -2,13 +2,12 @@ package com.orcuspay.dakpion.data.local
 
 import androidx.lifecycle.LiveData
 import androidx.room.*
-import androidx.room.OnConflictStrategy.REPLACE
 
 @Dao
 interface DakpionDao {
 
 
-    @Insert(onConflict = REPLACE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun createCredential(credentialEntity: CredentialEntity)
 
     @Query("SELECT * FROM credentialentity")

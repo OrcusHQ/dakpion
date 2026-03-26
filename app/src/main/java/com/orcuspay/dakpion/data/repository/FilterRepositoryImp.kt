@@ -1,7 +1,7 @@
 package com.orcuspay.dakpion.data.repository
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
+import androidx.lifecycle.map
 import com.orcuspay.dakpion.data.local.DakpionDatabase
 import com.orcuspay.dakpion.data.mapper.toFilter
 import com.orcuspay.dakpion.data.mapper.toFilterEntity
@@ -30,7 +30,7 @@ class FilterRepositoryImp @Inject constructor(
     }
 
     override fun getFiltersLiveData(): LiveData<List<Filter>> {
-        return Transformations.map(dao.getFiltersLiveData()) {
+        return dao.getFiltersLiveData().map {
             it.map { fe ->
                 fe.toFilter()
             }
