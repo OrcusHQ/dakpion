@@ -15,4 +15,4 @@
 local.properties
 key.properties
 *.jks
-/app/release
+/app/releaselocal.properties
