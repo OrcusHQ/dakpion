@@ -17,4 +17,6 @@ data class SMSEntity(
     val date: Long,
     val body: String,
     val status: SMSStatus,
+    val amount: Double? = null,
+    val balance: Double? = null
 )

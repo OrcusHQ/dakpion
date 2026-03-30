@@ -8,4 +8,5 @@ enum class SMSStatus {
     UNAUTHORIZED,
     DUPLICATE,
     FILTERED,
+    SUSPICIOUS,
 }

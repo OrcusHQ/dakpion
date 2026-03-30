@@ -7,6 +7,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.orcuspay.dakpion.data.exception.InvalidCredentialException
 import com.orcuspay.dakpion.data.remote.ApiResult
+import com.orcuspay.dakpion.domain.model.SMS
 import com.orcuspay.dakpion.domain.model.SMSStatus
 import com.orcuspay.dakpion.domain.repository.DakpionRepository
 import com.orcuspay.dakpion.domain.repository.SmsRepository
@@ -43,6 +44,7 @@ class DakpionKamla @AssistedInject constructor(
 
             var hasError = false
             var successCount = 0
+            var lastSuccessfulSms: SMS? = null
             
             credentialWithSMSList.forEach { cs ->
                 val credential = cs.credential
@@ -72,16 +74,23 @@ class DakpionKamla @AssistedInject constructor(
                                 }
                                 is ApiResult.Success -> {
                                     successCount++
+                                    lastSuccessfulSms = sms
                                 }
                             }
                         }
                 }
             }
 
-            if (successCount > 0) {
+            if (successCount == 1 && lastSuccessfulSms != null) {
+                notificationHelper.showNotification(
+                    notificationId = lastSuccessfulSms!!.smsId,
+                    title = "Payment Detected",
+                    content = "New payment from ${lastSuccessfulSms!!.sender}: ${lastSuccessfulSms!!.body.take(50)}..."
+                )
+            } else if (successCount > 1) {
                 notificationHelper.showNotification(
                     notificationId = 999,
-                    title = "Sync Complete",
+                    title = "Multiple Payments Detected",
                     content = "Successfully processed $successCount new transactions."
                 )
             }

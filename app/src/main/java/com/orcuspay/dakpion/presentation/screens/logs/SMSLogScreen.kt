@@ -316,6 +316,7 @@ fun SMSStatusBadge(
         SMSStatus.UNAUTHORIZED -> Color(0xFFFFE7F2)
         SMSStatus.DUPLICATE -> Color(0xFFFFE7F2)
         SMSStatus.FILTERED -> Color(0xFFFCEDB9)
+        SMSStatus.SUSPICIOUS -> Color(0xFFFFE7F2)
     }
 
     Row(modifier = modifier) {
@@ -333,6 +334,7 @@ fun SMSStatusBadge(
                 SMSStatus.UNAUTHORIZED -> "UNAUTHORIZED"
                 SMSStatus.DUPLICATE -> "DUPLICATE"
                 SMSStatus.FILTERED -> "FILTERED"
+                SMSStatus.SUSPICIOUS -> "SUSPICIOUS"
             }
 
             val color = when (status) {
@@ -343,6 +345,7 @@ fun SMSStatusBadge(
                 SMSStatus.UNAUTHORIZED -> Color(0xFF68052B)
                 SMSStatus.DUPLICATE -> Color(0xFF68052B)
                 SMSStatus.FILTERED -> Color(0xFF5F1A05)
+                SMSStatus.SUSPICIOUS -> Color(0xFF68052B)
             }
 
             Text(

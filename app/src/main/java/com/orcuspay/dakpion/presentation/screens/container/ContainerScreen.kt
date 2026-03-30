@@ -11,7 +11,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.orcuspay.dakpion.presentation.screens.container.bottom_navigation.BottomNavigationBar
 import com.orcuspay.dakpion.presentation.screens.container.bottom_navigation.NavigationItems
+import com.orcuspay.dakpion.presentation.screens.dashboard.DashboardScreen
 import com.orcuspay.dakpion.presentation.screens.filter.FilterScreen
+import com.orcuspay.dakpion.presentation.screens.help.HelpScreen
 import com.orcuspay.dakpion.presentation.screens.home.HomeScreen
 import com.orcuspay.dakpion.presentation.screens.logs.SMSLogScreen
 import com.ramcosta.composedestinations.annotation.Destination
@@ -46,11 +48,17 @@ fun Navigation(navController: NavHostController, navigator: DestinationsNavigato
         composable(NavigationItems.first().route) {
             HomeScreen(navigator = navigator)
         }
-        composable(NavigationItems[1].route) {
+        composable("analytics") {
+            DashboardScreen(navigator = navigator)
+        }
+        composable("logs") {
             SMSLogScreen(navigator = navigator)
         }
-        composable(NavigationItems.last().route) {
+        composable("filters") {
             FilterScreen(navigator = navigator)
+        }
+        composable("help") {
+            HelpScreen(navigator = navigator)
         }
     }
 }

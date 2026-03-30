@@ -21,8 +21,10 @@ import com.orcuspay.dakpion.R
 
 val NavigationItems = listOf(
     NavigationItem("home", R.drawable.ic_home, "Home"),
+    NavigationItem("analytics", R.drawable.ic_notification, "Analytics"),
     NavigationItem("logs", R.drawable.ic_clipboard, "Logs"),
     NavigationItem("filters", R.drawable.ic_filter, "Filters"),
+    NavigationItem("help", R.drawable.ic_alert, "Help"),
 )
 
 @Composable

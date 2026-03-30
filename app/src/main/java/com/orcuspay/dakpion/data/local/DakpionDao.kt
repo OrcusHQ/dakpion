@@ -6,7 +6,6 @@ import androidx.room.*
 @Dao
 interface DakpionDao {
 
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun createCredential(credentialEntity: CredentialEntity)
 
@@ -36,6 +35,22 @@ interface DakpionDao {
     @Update
     suspend fun updateSMS(smsEntity: SMSEntity)
 
+    @Query("SELECT * FROM smsentity WHERE credentialId = :credentialId AND sender = :sender AND status = 'STORED' ORDER BY date DESC LIMIT 1")
+    suspend fun getLastStoredSMS(credentialId: Int, sender: String): SMSEntity?
+
+    // Analytics Queries
+    @Query("SELECT COUNT(*) FROM smsentity WHERE status = 'STORED'")
+    fun getTotalPaymentsCount(): LiveData<Int>
+
+    @Query("SELECT sender, COUNT(*) as count FROM smsentity WHERE status = 'STORED' GROUP BY sender")
+    fun getPaymentCountBySender(): LiveData<List<SenderStat>>
+
+    @Query("SELECT status, COUNT(*) as count FROM smsentity GROUP BY status")
+    fun getPaymentCountByStatus(): LiveData<List<StatusStat>>
+
+    @Query("SELECT * FROM smsentity WHERE status = 'STORED' ORDER BY date DESC")
+    fun getAllStoredSMS(): LiveData<List<SMSEntity>>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun createFilter(filterEntity: FilterEntity)
 
@@ -54,3 +69,13 @@ interface DakpionDao {
     @Delete
     suspend fun deleteFilter(filterEntity: FilterEntity)
 }
+
+data class SenderStat(
+    val sender: String,
+    val count: Int
+)
+
+data class StatusStat(
+    val status: com.orcuspay.dakpion.domain.model.SMSStatus,
+    val count: Int
+)

@@ -8,6 +8,7 @@ import android.provider.Telephony
 import android.util.Log
 import com.orcuspay.dakpion.data.local.DakpionDatabase
 import com.orcuspay.dakpion.data.mapper.toCredential
+import com.orcuspay.dakpion.data.mapper.toSMS
 import com.orcuspay.dakpion.data.mapper.toSMSEntity
 import com.orcuspay.dakpion.domain.model.SMS
 import com.orcuspay.dakpion.domain.model.SMSStatus
@@ -67,7 +68,7 @@ class SmsRepositoryImp @Inject constructor(
                 var sms = SMS(
                     smsId = id,
                     credentialId = credential.id,
-                    sender = creator,
+                    sender = creator ?: "Unknown",
                     date = Date(date),
                     body = body,
                     status = SMSStatus.PROCESSING,
@@ -79,6 +80,12 @@ class SmsRepositoryImp @Inject constructor(
                     "upay",
                     "16216",
                     "IBBL",
+                    "01847-348685",
+                    "16259",
+                    "pathaopay",
+                    "telecash",
+                    "ipay",
+                    "tap",
                 )
 
                 if (
@@ -89,21 +96,43 @@ class SmsRepositoryImp @Inject constructor(
 
                     if (sms.sender.lowercase().contains("ibbl")) {
                         if (!sms.body.lowercase().contains("cellfin")) {
-                            return
+                            return@forEach
                         }
                     }
 
-                    if (filters.filter { filter ->
-                            filter.sender == null || filter.sender.lowercase() == sms.sender.lowercase()
-                        }.any { filter ->
-                            filter.match(sms.body)
-                        }) {
-                        sms = sms.copy(status = SMSStatus.FILTERED)
+                    // Extract amount and balance
+                    val amount = extractAmount(body)
+                    val currentBalance = extractBalance(body)
+                    
+                    sms = sms.copy(amount = amount, balance = currentBalance)
+
+                    // Balance Verification
+                    val lastSms = dao.getLastStoredSMS(credential.id, sms.sender)?.toSMS()
+                    if (lastSms != null && amount != null && currentBalance != null && lastSms.balance != null) {
+                        val expectedBalance = lastSms.balance + amount
+                        // allow small difference for charges if any, but usually payments are additions
+                        if (Math.abs(expectedBalance - currentBalance) > 0.01) {
+                            sms = sms.copy(status = SMSStatus.SUSPICIOUS)
+                        }
+                    }
+
+                    if (sms.status != SMSStatus.SUSPICIOUS) {
+                        if (filters.filter { filter ->
+                                filter.sender == null || filter.sender.lowercase() == sms.sender.lowercase()
+                            }.any { filter ->
+                                filter.match(sms.body)
+                            }) {
+                            sms = sms.copy(status = SMSStatus.FILTERED)
+                        }
                     }
 
                     val smsEntity = sms.toSMSEntity()
                     Log.d("kraken", "Created $smsEntity")
-                    dao.createSMS(smsEntity)
+                    try {
+                        dao.createSMS(smsEntity)
+                    } catch (e: Exception) {
+                        // Likely duplicate, ignore
+                    }
                 }
             }
 
@@ -112,6 +141,36 @@ class SmsRepositoryImp @Inject constructor(
 
 
         cursor.close()
+    }
+
+    private fun extractAmount(body: String): Double? {
+        val patterns = listOf(
+            Regex("Tk\\s?([0-9,]+\\.[0-9]{2})"),
+            Regex("Amount:\\s?Tk\\s?([0-9,]+\\.[0-9]{2})"),
+            Regex("received\\s?Tk\\s?([0-9,]+\\.[0-9]{2})")
+        )
+        for (pattern in patterns) {
+            val match = pattern.find(body)
+            if (match != null) {
+                return match.groupValues[1].replace(",", "").toDoubleOrNull()
+            }
+        }
+        return null
+    }
+
+    private fun extractBalance(body: String): Double? {
+        val patterns = listOf(
+            Regex("Balance:\\s?Tk\\s?([0-9,]+\\.[0-9]{2})"),
+            Regex("Bal:\\s?Tk\\s?([0-9,]+\\.[0-9]{2})"),
+            Regex("Current Balance\\s?Tk\\s?([0-9,]+\\.[0-9]{2})")
+        )
+        for (pattern in patterns) {
+            val match = pattern.find(body)
+            if (match != null) {
+                return match.groupValues[1].replace(",", "").toDoubleOrNull()
+            }
+        }
+        return null
     }
 
     override suspend fun updateSMS(sms: SMS) {

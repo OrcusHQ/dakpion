@@ -9,5 +9,7 @@ data class SMS(
     val sender: String,
     val date: Date,
     val body: String,
-    val status: SMSStatus
+    val status: SMSStatus,
+    val amount: Double? = null,
+    val balance: Double? = null
 )

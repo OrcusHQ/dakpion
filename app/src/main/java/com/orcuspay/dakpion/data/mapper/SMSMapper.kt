@@ -14,7 +14,9 @@ fun SMS.toSMSEntity(): SMSEntity {
         sender = sender,
         date = date.time,
         body = body,
-        status = status
+        status = status,
+        amount = amount,
+        balance = balance
     )
 }
 
@@ -28,6 +30,8 @@ fun SMSEntity.toSMS(): SMS {
         date = Date(date),
         body = body,
         status = status,
+        amount = amount,
+        balance = balance
     )
 }
 

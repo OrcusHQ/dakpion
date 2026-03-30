@@ -7,6 +7,8 @@ import com.orcuspay.dakpion.data.exception.InternalServerException
 import com.orcuspay.dakpion.data.exception.InvalidCredentialException
 import com.orcuspay.dakpion.data.local.CredentialEntity
 import com.orcuspay.dakpion.data.local.DakpionDatabase
+import com.orcuspay.dakpion.data.local.SenderStat
+import com.orcuspay.dakpion.data.local.StatusStat
 import com.orcuspay.dakpion.data.mapper.*
 import com.orcuspay.dakpion.data.remote.ApiResult
 import com.orcuspay.dakpion.data.remote.DakpionApi
@@ -274,6 +276,24 @@ class DakpionRepositoryImp @Inject constructor(
             it.map { csms ->
                 csms.toCredentialWithSMS()
             }
+        }
+    }
+
+    override fun getTotalPaymentsCount(): LiveData<Int> {
+        return dao.getTotalPaymentsCount()
+    }
+
+    override fun getPaymentCountBySender(): LiveData<List<SenderStat>> {
+        return dao.getPaymentCountBySender()
+    }
+
+    override fun getPaymentCountByStatus(): LiveData<List<StatusStat>> {
+        return dao.getPaymentCountByStatus()
+    }
+
+    override fun getAllStoredSMS(): LiveData<List<SMS>> {
+        return dao.getAllStoredSMS().map { entities ->
+            entities.map { it.toSMS() }
         }
     }
 }
