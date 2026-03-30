@@ -106,7 +106,9 @@ class DakpionRepositoryImp @Inject constructor(
             secretKey = credential.secretKey,
             mode = credential.mode,
             senderId = sms.sender,
-            body = sms.body
+            body = sms.body,
+            amount = sms.amount,
+            balance = sms.balance,
         )
 
         if (sms.status != SMSStatus.PROCESSING) {
@@ -136,9 +138,10 @@ class DakpionRepositoryImp @Inject constructor(
             val verifyResponse = response?.toSendMessageResponse()
             if (verifyResponse != null) {
                 if (verifyResponse.stored) {
+                    val newStatus = if (verifyResponse.suspicious) SMSStatus.SUSPICIOUS else SMSStatus.STORED
                     dao.updateSMS(
                         smsEntity = sms.copy(
-                            status = SMSStatus.STORED
+                            status = newStatus
                         ).toSMSEntity()
                     )
                 } else {

@@ -140,7 +140,10 @@ fun HomeScreen(
         ) {
 
             if (credentials.isNotEmpty()) {
-                LazyColumn {
+                LazyColumn(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     items(credentials.size, key = {
                         credentials[it].id
                     }) { i ->
@@ -163,8 +166,7 @@ fun HomeScreen(
 
                         SwipeToDismiss(
                             state = dismissState,
-                            modifier = Modifier
-                                .padding(vertical = Dp(1f)),
+                            modifier = Modifier,
                             directions = setOf(
                                 DismissDirection.EndToStart
                             ),
@@ -174,7 +176,7 @@ fun HomeScreen(
                             background = {
                                 val color by animateColorAsState(
                                     when (dismissState.targetValue) {
-                                        DismissValue.Default -> Color.White
+                                        DismissValue.Default -> Color.Transparent
                                         else -> Color(0xFFDF1B41)
                                     }
                                 )
@@ -199,12 +201,12 @@ fun HomeScreen(
                                     ) {
                                         Text(
                                             text = "Delete",
-                                            fontSize = 16.sp,
+                                            fontSize = 15.sp,
                                             fontFamily = interFontFamily,
                                             fontWeight = FontWeight.Medium,
                                             color = Color.White
                                         )
-                                        Gap(width = 12.dp)
+                                        Gap(width = 10.dp)
                                         Icon(
                                             painterResource(id = R.drawable.ic_delete),
                                             contentDescription = "Delete Icon",
@@ -235,27 +237,26 @@ fun HomeScreen(
                     Image(
                         painter = painterResource(id = R.drawable.empty),
                         contentDescription = "",
-                        modifier = Modifier
-                            .size(175.dp),
+                        modifier = Modifier.size(160.dp),
                         contentScale = ContentScale.Fit
                     )
-                    Gap(height = 4.dp)
+                    Gap(height = 12.dp)
                     Text(
-                        text = "Everything is empty here",
+                        text = "No businesses yet",
                         fontFamily = interFontFamily,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 22.sp,
-                        color = Color.Black,
+                        fontSize = 20.sp,
+                        color = MaterialTheme.colors.onBackground,
                         textAlign = TextAlign.Center,
                     )
-                    Gap(height = 8.dp)
+                    Gap(height = 6.dp)
                     Text(
-                        text = "Add a new account",
+                        text = "Add a business to start syncing payments",
                         fontFamily = interFontFamily,
-                        color = Color(0xFF545969),
+                        color = Color(0xFF64748B),
                         textAlign = TextAlign.Center,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal
                     )
                 }
             }

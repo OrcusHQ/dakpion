@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -22,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.orcuspay.dakpion.presentation.composables.*
 import com.orcuspay.dakpion.presentation.screens.destinations.AllDoneScreenDestination
+import com.orcuspay.dakpion.presentation.theme.ErrorBg
+import com.orcuspay.dakpion.presentation.theme.ErrorText
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -77,17 +80,17 @@ fun AddNewBusinessScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(Color(0xFFFFE7F2)),
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(ErrorBg),
                         contentAlignment = Alignment.CenterStart
                     ) {
                         Text(
                             text = state.error,
                             fontWeight = FontWeight.Medium,
-                            fontSize = 18.sp,
+                            fontSize = 14.sp,
                             fontFamily = interFontFamily,
-                            color = Color(0xFF890D37),
-                            modifier = Modifier.padding(16.dp)
+                            color = ErrorText,
+                            modifier = Modifier.padding(14.dp)
                         )
                     }
                     Gap(height = 24.dp)
@@ -101,7 +104,7 @@ fun AddNewBusinessScreen(
                         fontFamily = interFontFamily,
                         fontWeight = FontWeight.Medium,
                         fontSize = 17.sp,
-                        color = Color.Black,
+                        color = MaterialTheme.colors.onSurface,
                     ),
                     modifier = Modifier.padding(horizontal = 16.dp),
                     title = "Access key",
@@ -122,7 +125,7 @@ fun AddNewBusinessScreen(
                         fontFamily = interFontFamily,
                         fontWeight = FontWeight.Medium,
                         fontSize = 17.sp,
-                        color = Color.Black,
+                        color = MaterialTheme.colors.onSurface,
                     ),
                     modifier = Modifier.padding(horizontal = 16.dp),
                     title = "Secret key",

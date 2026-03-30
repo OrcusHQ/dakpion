@@ -30,13 +30,16 @@ fun SendMessageRequest.toSendMessageRequestDto(): SendMessageRequestDto {
         secretKey = secretKey,
         mode = if (mode == Mode.LIVE) "prod" else "test",
         senderId = senderId,
-        body = body
+        body = body,
+        amount = amount,
+        balance = balance,
     )
 }
 
 fun SendMessageResponseDto.toSendMessageResponse(): SendMessageResponse {
     return SendMessageResponse(
-        stored = stored
+        stored = stored,
+        suspicious = suspicious,
     )
 }
 

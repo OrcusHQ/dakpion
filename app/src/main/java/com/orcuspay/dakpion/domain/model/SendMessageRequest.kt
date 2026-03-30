@@ -5,5 +5,7 @@ data class SendMessageRequest(
     val secretKey: String,
     val mode: Mode,
     val senderId: String,
-    val body: String
+    val body: String,
+    val amount: Double? = null,
+    val balance: Double? = null,
 )

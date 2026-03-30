@@ -27,7 +27,8 @@ fun TopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp).padding(top = 8.dp),
+            .height(60.dp)
+            .padding(top = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
@@ -51,12 +52,12 @@ fun TopBar(
             text = title,
             modifier = Modifier
                 .padding(
-                    start = if (showBackButton) 12.dp else 16.dp
+                    start = if (showBackButton) 12.dp else 20.dp
                 )
                 .weight(1f),
             fontFamily = interFontFamily,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold,
+            fontSize = 22.sp,
             color = MaterialTheme.colors.onBackground,
             overflow = TextOverflow.Ellipsis
         )

@@ -23,6 +23,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.orcuspay.dakpion.presentation.theme.BorderColor
+import com.orcuspay.dakpion.presentation.theme.PrimaryColor
+import com.orcuspay.dakpion.presentation.theme.TextSecondary
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 
 
@@ -35,22 +38,20 @@ fun XTextField(
     textStyle: TextStyle,
     singleLine: Boolean = true,
     placeholder: String = "",
-    placeholderColor: Color = Color.Gray,
+    placeholderColor: Color = Color(0xFFB0B8C1),
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     maxChar: Int? = null,
     maxLines: Int = Int.MAX_VALUE,
     readOnly: Boolean = false,
-    borderColor: Color = Color.Gray,
+    borderColor: Color = BorderColor,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
 
-    val currentBorderColor = if (isFocused)
-        Color(0xFF043B15)
-    else borderColor
-    val currentBorderWidth = if (isFocused) 3.dp else 1.dp
+    val currentBorderColor = if (isFocused) PrimaryColor else borderColor
+    val currentBorderWidth = if (isFocused) 2.dp else 1.dp
 
     Column(
         verticalArrangement = Arrangement.Center,
@@ -60,12 +61,12 @@ fun XTextField(
         if (title != null) {
             Text(
                 text = title,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                fontSize = 13.sp,
                 fontFamily = interFontFamily,
-                color = Color.Black,
+                color = TextSecondary,
             )
-            Gap(height = 8.dp)
+            Gap(height = 6.dp)
         }
 
         Row(
@@ -77,16 +78,12 @@ fun XTextField(
                     color = currentBorderColor,
                     shape = RoundedCornerShape(12.dp)
                 )
-                .padding(
-                    start = 16.dp,
-                    end = 16.dp
-                ),
+                .padding(start = 16.dp, end = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.CenterStart
             ) {
                 BasicTextField(
@@ -98,7 +95,6 @@ fun XTextField(
                         if (maxChar != null) {
                             textFieldValue = it.ofMaxLength(maxChar)
                         }
-
                         onValueChange(textFieldValue)
                     },
                     textStyle = textStyle.copy(textAlign = TextAlign.Start),
@@ -106,8 +102,7 @@ fun XTextField(
                     keyboardOptions = keyboardOptions,
                     keyboardActions = keyboardActions,
                     visualTransformation = visualTransformation,
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     maxLines = maxLines,
                 )
                 if (value.text.isEmpty())
@@ -115,10 +110,10 @@ fun XTextField(
                         text = placeholder,
                         color = placeholderColor,
                         fontSize = textStyle.fontSize,
+                        fontFamily = interFontFamily,
                         fontWeight = FontWeight(400),
                     )
             }
-
         }
     }
 }
@@ -128,14 +123,12 @@ fun TextFieldValue.ofMaxLength(maxLength: Int): TextFieldValue {
     return if (overLength > 0) {
         val headIndex = selection.end - overLength
         val trailIndex = selection.end
-        // Under normal conditions, headIndex >= 0
         if (headIndex >= 0) {
             copy(
                 text = text.substring(0, headIndex) + text.substring(trailIndex, text.length),
                 selection = TextRange(headIndex)
             )
         } else {
-            // exceptional
             copy(text.take(maxLength), selection = TextRange(maxLength))
         }
     } else {

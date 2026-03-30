@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -77,7 +78,7 @@ fun AddNewFilterScreen(
                         fontFamily = interFontFamily,
                         fontWeight = FontWeight.Medium,
                         fontSize = 17.sp,
-                        color = Color.Black,
+                        color = MaterialTheme.colors.onSurface,
                     ),
                     modifier = Modifier.padding(horizontal = 16.dp),
                     title = "Sender",
@@ -96,7 +97,7 @@ fun AddNewFilterScreen(
                     fontFamily = interFontFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 14.sp,
-                    color = Color(0xFF545969),
+                    color = Color(0xFF64748B),
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
                 Gap(height = 24.dp)
@@ -108,7 +109,7 @@ fun AddNewFilterScreen(
                         fontFamily = interFontFamily,
                         fontWeight = FontWeight.Medium,
                         fontSize = 17.sp,
-                        color = Color.Black,
+                        color = MaterialTheme.colors.onSurface,
                     ),
                     modifier = Modifier.padding(horizontal = 16.dp),
                     title = "Filter",
@@ -126,7 +127,7 @@ fun AddNewFilterScreen(
                     fontFamily = interFontFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 14.sp,
-                    color = Color(0xFF545969),
+                    color = Color(0xFF64748B),
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
                 Gap(height = 16.dp)

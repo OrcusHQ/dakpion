@@ -33,7 +33,7 @@ fun HelpScreen(
         topBar = {
             TopBar(title = "Help & Support")
         },
-        backgroundColor = Color(0xFFF8FAFC)
+        backgroundColor = MaterialTheme.colors.background
     ) { pv ->
         LazyColumn(
             modifier = Modifier
@@ -102,7 +102,7 @@ fun HelpScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     elevation = 0.dp,
-                    backgroundColor = Color.White
+                    backgroundColor = MaterialTheme.colors.surface
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -131,7 +131,7 @@ fun HelpItem(question: String, answer: String) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.White)
+            .background(MaterialTheme.colors.surface)
             .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
             .clickable { expanded = !expanded }
             .padding(16.dp)

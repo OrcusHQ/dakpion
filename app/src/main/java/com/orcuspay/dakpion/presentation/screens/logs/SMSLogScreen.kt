@@ -1,6 +1,5 @@
 package com.orcuspay.dakpion.presentation.screens.logs
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -57,7 +56,6 @@ fun SMSLogScreen(
     val smsList = credentialWithSMSList.getOrNull(selectedCredential)?.smsList ?: listOf()
     val groupedSMS = viewModel.groupSMSByDate(smsList)
 
-    Log.d("kraken", "Grouped: $groupedSMS")
     Scaffold(
         topBar = {
             TopBar(
@@ -95,7 +93,9 @@ fun SMSLogScreen(
             verticalArrangement = Arrangement.Top,
         ) {
             Gap(height = 10.dp)
-            LazyRow {
+            LazyRow(
+                contentPadding = PaddingValues(end = 16.dp)
+            ) {
                 items(credentials.size) { i ->
                     val credential = credentials[i]
 
@@ -149,7 +149,7 @@ fun SMSLogScreen(
                             text = credential.businessName,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.sp,
-                            color = if (i == selectedCredential) Color.Black else MaterialTheme.colors.onSurface,
+                            color = if (i == selectedCredential) MaterialTheme.colors.onBackground else MaterialTheme.colors.onSurface,
                             fontFamily = interFontFamily,
                             modifier = Modifier.padding(end = 8.dp)
                         )
@@ -171,42 +171,45 @@ fun SMSLogScreen(
                         painter = painterResource(id = R.drawable.empty),
                         contentDescription = "",
                         modifier = Modifier
-                            .size(175.dp),
+                            .size(160.dp),
                         contentScale = ContentScale.Fit
                     )
-                    Gap(height = 4.dp)
+                    Gap(height = 12.dp)
                     Text(
-                        text = "Everything is empty here",
+                        text = "No logs yet",
                         fontFamily = interFontFamily,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 22.sp,
+                        fontSize = 20.sp,
                         color = MaterialTheme.colors.onBackground,
                         textAlign = TextAlign.Center,
                     )
-                    Gap(height = 8.dp)
+                    Gap(height = 6.dp)
                     Text(
-                        text = "Your SMS logs will be here",
+                        text = "Your SMS logs will appear here",
                         fontFamily = interFontFamily,
-                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
                         textAlign = TextAlign.Center,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal
                     )
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     groupedSMS.forEach { (date, smsGroup) ->
                         item {
                             Text(
                                 text = date,
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 15.sp,
-                                color = MaterialTheme.colors.onBackground,
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
                                 fontFamily = interFontFamily,
                                 modifier = Modifier.padding(
-                                    start = 16.dp,
-                                    top = 5.dp,
-                                    bottom = 5.dp
+                                    top = 8.dp,
+                                    bottom = 4.dp
                                 ),
                             )
                         }
@@ -216,10 +219,13 @@ fun SMSLogScreen(
 
                             Box(
                                 modifier = Modifier
-                                    .padding(horizontal = 16.dp, vertical = 5.dp)
+                                    .background(
+                                        color = MaterialTheme.colors.surface,
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
                                     .border(
                                         width = 1.dp,
-                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.1f),
+                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.08f),
                                         shape = RoundedCornerShape(12.dp)
                                     )
 
@@ -319,42 +325,47 @@ fun SMSStatusBadge(
         SMSStatus.SUSPICIOUS -> Color(0xFFFFE7F2)
     }
 
+    val textColor = when (status) {
+        SMSStatus.PROCESSING -> Color(0xFF102C60)
+        SMSStatus.ERROR -> Color(0xFF68052B)
+        SMSStatus.STORED -> Color(0xFF043B15)
+        SMSStatus.NOT_STORED -> Color(0xFF5F1A05)
+        SMSStatus.UNAUTHORIZED -> Color(0xFF68052B)
+        SMSStatus.DUPLICATE -> Color(0xFF68052B)
+        SMSStatus.FILTERED -> Color(0xFF5F1A05)
+        SMSStatus.SUSPICIOUS -> Color(0xFF68052B)
+    }
+
+    val text = when (status) {
+        SMSStatus.PROCESSING -> "PROCESSING"
+        SMSStatus.ERROR -> "ERROR"
+        SMSStatus.STORED -> "STORED"
+        SMSStatus.NOT_STORED -> "NOT STORED"
+        SMSStatus.UNAUTHORIZED -> "UNAUTHORIZED"
+        SMSStatus.DUPLICATE -> "DUPLICATE"
+        SMSStatus.FILTERED -> "FILTERED"
+        SMSStatus.SUSPICIOUS -> "SUSPICIOUS"
+    }
+
     Row(modifier = modifier) {
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
-                .background(backgroundColor),
+                .clip(RoundedCornerShape(6.dp))
+                .background(backgroundColor)
+                .border(
+                    width = 1.dp,
+                    color = textColor.copy(alpha = 0.25f),
+                    shape = RoundedCornerShape(6.dp)
+                ),
             contentAlignment = Alignment.Center
         ) {
-            val text = when (status) {
-                SMSStatus.PROCESSING -> "PROCESSING"
-                SMSStatus.ERROR -> "ERROR"
-                SMSStatus.STORED -> "STORED IN DB"
-                SMSStatus.NOT_STORED -> "NOT STORED IN DB"
-                SMSStatus.UNAUTHORIZED -> "UNAUTHORIZED"
-                SMSStatus.DUPLICATE -> "DUPLICATE"
-                SMSStatus.FILTERED -> "FILTERED"
-                SMSStatus.SUSPICIOUS -> "SUSPICIOUS"
-            }
-
-            val color = when (status) {
-                SMSStatus.PROCESSING -> Color(0xFF102C60)
-                SMSStatus.ERROR -> Color(0xFF68052B)
-                SMSStatus.STORED -> Color(0xFF043B15)
-                SMSStatus.NOT_STORED -> Color(0xFF5F1A05)
-                SMSStatus.UNAUTHORIZED -> Color(0xFF68052B)
-                SMSStatus.DUPLICATE -> Color(0xFF68052B)
-                SMSStatus.FILTERED -> Color(0xFF5F1A05)
-                SMSStatus.SUSPICIOUS -> Color(0xFF68052B)
-            }
-
             Text(
                 text = text,
-                color = color,
+                color = textColor,
                 fontFamily = interFontFamily,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(horizontal = 4.dp)
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
             )
         }
     }

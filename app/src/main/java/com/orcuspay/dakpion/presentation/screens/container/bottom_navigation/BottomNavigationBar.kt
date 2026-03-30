@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.orcuspay.dakpion.R
+import com.orcuspay.dakpion.presentation.theme.PrimaryColor
+import com.orcuspay.dakpion.presentation.theme.interFontFamily
 
 val NavigationItems = listOf(
     NavigationItem("home", R.drawable.ic_home, "Home"),
@@ -36,7 +38,8 @@ fun BottomNavigationBar(
 
     BottomNavigation(
         backgroundColor = backgroundColor,
-        contentColor = Color.White
+        contentColor = Color.White,
+        elevation = 12.dp,
     ) {
 
         val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -65,34 +68,29 @@ fun BottomNavigationBar(
                         Text(
                             modifier = Modifier
                                 .wrapContentWidth(unbounded = true)
-                                .requiredWidth(maxWidth + 24.dp), // 24.dp = the padding * 2
+                                .requiredWidth(maxWidth + 24.dp),
                             text = navigationItem.title,
                             softWrap = false,
                             textAlign = TextAlign.Center,
                             maxLines = 1,
                             fontSize = 10.sp,
-                            fontWeight = FontWeight(500),
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                            fontFamily = interFontFamily,
                         )
                     }
                 },
-                selectedContentColor = Color(0xFF043B15),
-                unselectedContentColor = Color(0xFFA3ACBA),
+                selectedContentColor = PrimaryColor,
+                unselectedContentColor = Color(0xFFB0B8C1),
                 alwaysShowLabel = true,
                 selected = selected,
                 onClick = {
                     navController.navigate(navigationItem.route) {
-                        // Pop up to the start destination of the graph to
-                        // avoid building up a large stack of destinations
-                        // on the back stack as users select items
                         navController.graph.startDestinationRoute?.let { route ->
                             popUpTo(route) {
                                 saveState = true
                             }
                         }
-                        // Avoid multiple copies of the same destination when
-                        // reselecting the same item
                         launchSingleTop = true
-                        // Restore state when reselecting a previously selected item
                         restoreState = true
                     }
                 }

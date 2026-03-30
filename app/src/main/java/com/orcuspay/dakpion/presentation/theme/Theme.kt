@@ -7,10 +7,14 @@ import androidx.compose.ui.graphics.Color
 
 private val LightColorPalette = lightColors(
     primary = PrimaryColor,
-    primaryVariant = AccentColor,
+    primaryVariant = PrimaryDark,
     onPrimary = Color.White,
-    secondary = SecondaryColor,
-    background = Color.White
+    secondary = AccentColor,
+    onSecondary = Color.White,
+    background = BackgroundColor,
+    surface = SurfaceColor,
+    onBackground = TextPrimary,
+    onSurface = TextPrimary,
 )
 
 @Composable

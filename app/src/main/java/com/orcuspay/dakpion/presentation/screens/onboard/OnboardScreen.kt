@@ -52,23 +52,23 @@ fun OnboardScreen(
         Image(
             painter = painterResource(id = R.drawable.onboarding),
             contentDescription = "",
-            modifier = Modifier.size(width = 235.dp, height = 230.dp),
+            modifier = Modifier.size(width = 220.dp, height = 215.dp),
             contentScale = ContentScale.FillWidth
         )
-        Gap(height = 24.dp)
+        Gap(height = 32.dp)
         Text(
-            text = "GET STARTED!",
-            fontSize = 50.sp,
+            text = "Get Started",
+            fontSize = 36.sp,
             color = Color.Black,
             fontFamily = gilroyFontFamily,
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center,
         )
-        Gap(height = 8.dp)
+        Gap(height = 12.dp)
         Text(
             text = "Configure Dakpion to start automating your payments with Orcus.",
-            fontSize = 16.sp,
-            color = Color(0xFF545969),
+            fontSize = 15.sp,
+            color = Color(0xFF64748B),
             fontFamily = interFontFamily,
             fontWeight = FontWeight.Normal,
             textAlign = TextAlign.Center,
