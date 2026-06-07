@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import com.orcuspay.dakpion.presentation.screens.container.bottom_navigation.BottomNavigationBar
 import com.orcuspay.dakpion.presentation.screens.container.bottom_navigation.NavigationItems
 import com.orcuspay.dakpion.presentation.screens.dashboard.DashboardScreen
+import com.orcuspay.dakpion.presentation.screens.device.DeviceStatusScreen
 import com.orcuspay.dakpion.presentation.screens.filter.FilterScreen
 import com.orcuspay.dakpion.presentation.screens.help.HelpScreen
 import com.orcuspay.dakpion.presentation.screens.home.HomeScreen
@@ -50,6 +51,9 @@ fun Navigation(navController: NavHostController, navigator: DestinationsNavigato
         }
         composable("analytics") {
             DashboardScreen(navigator = navigator)
+        }
+        composable("device") {
+            DeviceStatusScreen()
         }
         composable("logs") {
             SMSLogScreen(navigator = navigator)

@@ -36,7 +36,14 @@ class DakpionKamla @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         try {
-            val lastSyncTime = dakpionPreference.getLastSyncTime() ?: return Result.retry()
+            dakpionRepository.syncCredentials()
+
+            val lastSyncTime = dakpionPreference.getLastSyncTime()
+            if (lastSyncTime == null) {
+                dakpionPreference.setLastSyncTime(Date())
+                return Result.success()
+            }
+
             smsRepository.loadSMSAfter(after = lastSyncTime)
             dakpionPreference.setLastSyncTime(Date())
 
@@ -53,7 +60,11 @@ class DakpionKamla @AssistedInject constructor(
                 if (credential.enabled) {
                     smsList
                         .filter {
-                            (it.status == SMSStatus.PROCESSING || it.status == SMSStatus.ERROR)
+                            (
+                                it.status == SMSStatus.PROCESSING ||
+                                    it.status == SMSStatus.ERROR ||
+                                    it.status == SMSStatus.SUSPICIOUS
+                                )
                         }
                         .forEach { sms ->
                             val result = dakpionRepository.send(

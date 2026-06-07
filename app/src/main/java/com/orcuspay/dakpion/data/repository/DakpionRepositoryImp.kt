@@ -14,6 +14,7 @@ import com.orcuspay.dakpion.data.remote.ApiResult
 import com.orcuspay.dakpion.data.remote.DakpionApi
 import com.orcuspay.dakpion.domain.model.*
 import com.orcuspay.dakpion.domain.repository.DakpionRepository
+import com.orcuspay.dakpion.util.DeviceInfoProvider
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
@@ -23,6 +24,7 @@ import javax.inject.Singleton
 class DakpionRepositoryImp @Inject constructor(
     private val api: DakpionApi,
     private val db: DakpionDatabase,
+    private val deviceInfoProvider: DeviceInfoProvider,
 ) : DakpionRepository {
 
     private val dao = db.dao
@@ -37,7 +39,7 @@ class DakpionRepositoryImp @Inject constructor(
                     else -> "Network error: ${e.code()} ${e.message()}"
                 }
             }
-            is IOException -> "Network timeout or connection issue. Please check your internet."
+            is IOException -> "Network error: ${e::class.simpleName} - ${e.message}"
             null -> "An unknown error occurred."
             else -> e.message ?: "An unexpected error occurred."
         }
@@ -45,7 +47,11 @@ class DakpionRepositoryImp @Inject constructor(
 
     override suspend fun verify(verifyRequest: VerifyRequest): ApiResult<VerifyResponse> {
         val result = try {
-            api.verify(verifyRequest.toVerifyRequestDto())
+            api.verify(
+                verifyRequest.copy(
+                    deviceInfo = verifyRequest.deviceInfo ?: deviceInfoProvider.getDeviceInfo()
+                ).toVerifyRequestDto()
+            )
         } catch (e: Exception) {
             return ApiResult.Error(
                 message = getErrorMessage(e),
@@ -109,6 +115,7 @@ class DakpionRepositoryImp @Inject constructor(
             body = sms.body,
             amount = sms.amount,
             balance = sms.balance,
+            deviceInfo = deviceInfoProvider.getDeviceInfo(),
         )
 
         if (sms.status != SMSStatus.PROCESSING) {
@@ -212,6 +219,7 @@ class DakpionRepositoryImp @Inject constructor(
                     VerifyRequest(
                         accessKey = credential.accessKey,
                         secretKey = credential.secretKey,
+                        deviceInfo = deviceInfoProvider.getDeviceInfo(),
                     ).toVerifyRequestDto()
                 )
             } catch (e: Exception) {

@@ -16,6 +16,6 @@ interface DakpionApi {
     suspend fun send(@Body sendMessageRequestDto: SendMessageRequestDto): Result<SendMessageResponseDto>
 
     companion object {
-        const val BASE_URL = "https://api.orcuspay.com/api/"
+        const val BASE_URL = "https://brain.orcuspay.com/api/"
     }
 }

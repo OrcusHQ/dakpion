@@ -9,7 +9,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -24,9 +23,9 @@ import com.orcuspay.dakpion.presentation.theme.interFontFamily
 val NavigationItems = listOf(
     NavigationItem("home", R.drawable.ic_home, "Home"),
     NavigationItem("analytics", R.drawable.ic_notification, "Analytics"),
+    NavigationItem("device", R.drawable.ic_alert, "Device"),
     NavigationItem("logs", R.drawable.ic_clipboard, "Logs"),
     NavigationItem("filters", R.drawable.ic_filter, "Filters"),
-    NavigationItem("help", R.drawable.ic_alert, "Help"),
 )
 
 @Composable
@@ -34,8 +33,6 @@ fun BottomNavigationBar(
     backgroundColor: Color = Color.White,
     navController: NavController,
 ) {
-    val context = LocalContext.current
-
     BottomNavigation(
         backgroundColor = backgroundColor,
         contentColor = Color.White,

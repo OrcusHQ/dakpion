@@ -8,4 +8,13 @@ data class SendMessageRequestDto(
     val body: String,
     val amount: Double? = null,
     val balance: Double? = null,
+    val deviceId: String? = null,
+    val deviceName: String? = null,
+    val manufacturer: String? = null,
+    val model: String? = null,
+    val sdk: String? = null,
+    val appVersion: String? = null,
+    val batteryLevel: Int? = null,
+    val network: String? = null,
+    val status: String? = null,
 )

@@ -8,4 +8,5 @@ data class SendMessageRequest(
     val body: String,
     val amount: Double? = null,
     val balance: Double? = null,
+    val deviceInfo: DeviceInfo? = null,
 )

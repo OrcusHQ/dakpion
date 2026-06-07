@@ -11,6 +11,15 @@ fun VerifyRequest.toVerifyRequestDto(): VerifyRequestDto {
     return VerifyRequestDto(
         accessKey = accessKey,
         secretKey = secretKey,
+        deviceId = deviceInfo?.deviceId,
+        deviceName = deviceInfo?.deviceName,
+        manufacturer = deviceInfo?.manufacturer,
+        model = deviceInfo?.model,
+        sdk = deviceInfo?.sdk,
+        appVersion = deviceInfo?.appVersion,
+        batteryLevel = deviceInfo?.batteryLevel,
+        network = deviceInfo?.network,
+        status = deviceInfo?.status,
     )
 }
 
@@ -33,6 +42,15 @@ fun SendMessageRequest.toSendMessageRequestDto(): SendMessageRequestDto {
         body = body,
         amount = amount,
         balance = balance,
+        deviceId = deviceInfo?.deviceId,
+        deviceName = deviceInfo?.deviceName,
+        manufacturer = deviceInfo?.manufacturer,
+        model = deviceInfo?.model,
+        sdk = deviceInfo?.sdk,
+        appVersion = deviceInfo?.appVersion,
+        batteryLevel = deviceInfo?.batteryLevel,
+        network = deviceInfo?.network,
+        status = deviceInfo?.status,
     )
 }
 
