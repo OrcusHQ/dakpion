@@ -23,6 +23,7 @@ class SmsReceiver : BroadcastReceiver() {
             val workRequest =
                 OneTimeWorkRequestBuilder<DakpionKamla>()
                     .setConstraints(constraints)
+                    .setInitialDelay(5L, TimeUnit.SECONDS)
                     .setBackoffCriteria(
                         BackoffPolicy.LINEAR,
                         2L,

@@ -32,20 +32,26 @@ class DakpionKamla @AssistedInject constructor(
 
     companion object {
         const val TAG = "dakpionkamla"
+        private const val FIRST_SYNC_LOOKBACK_MS = 24L * 60L * 60L * 1000L
+        private const val AUTO_SYNC_LOOKBACK_MS = 5L * 60L * 1000L
     }
 
     override suspend fun doWork(): Result {
         try {
+            val syncStartedAt = Date()
             dakpionRepository.syncCredentials()
 
             val lastSyncTime = dakpionPreference.getLastSyncTime()
-            if (lastSyncTime == null) {
-                dakpionPreference.setLastSyncTime(Date())
-                return Result.success()
-            }
+            val scanAfter = Date(
+                if (lastSyncTime == null) {
+                    syncStartedAt.time - FIRST_SYNC_LOOKBACK_MS
+                } else {
+                    lastSyncTime.time - AUTO_SYNC_LOOKBACK_MS
+                }.coerceAtLeast(0L)
+            )
 
-            smsRepository.loadSMSAfter(after = lastSyncTime)
-            dakpionPreference.setLastSyncTime(Date())
+            smsRepository.loadSMSAfter(after = scanAfter)
+            dakpionPreference.setLastSyncTime(syncStartedAt)
 
             val credentialWithSMSList = dakpionRepository.getCredentialWithSMS()
 
@@ -63,7 +69,8 @@ class DakpionKamla @AssistedInject constructor(
                             (
                                 it.status == SMSStatus.PROCESSING ||
                                     it.status == SMSStatus.ERROR ||
-                                    it.status == SMSStatus.SUSPICIOUS
+                                    it.status == SMSStatus.SUSPICIOUS ||
+                                    it.status == SMSStatus.NOT_STORED
                                 )
                         }
                         .forEach { sms ->
