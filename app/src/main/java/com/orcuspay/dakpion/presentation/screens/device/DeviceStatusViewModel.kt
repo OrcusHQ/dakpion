@@ -52,9 +52,8 @@ class DeviceStatusViewModel @Inject constructor(
             try {
                 dakpionRepository.syncCredentials()
 
-                val lastSyncTime = dakpionPreference.getLastSyncTime()
-                    ?: Date(System.currentTimeMillis() - 24L * 60L * 60L * 1000L)
-                smsRepository.loadSMSAfter(lastSyncTime)
+                val recoveryStartTime = Date(System.currentTimeMillis() - 24L * 60L * 60L * 1000L)
+                smsRepository.loadSMSAfter(recoveryStartTime)
                 dakpionPreference.setLastSyncTime(Date())
 
                 var attempted = 0
@@ -77,9 +76,9 @@ class DeviceStatusViewModel @Inject constructor(
                 }
 
                 val message = if (attempted == 0) {
-                    "No pending SMS to sync"
+                    "No recent pending SMS to sync"
                 } else {
-                    "Synced $synced of $attempted pending SMS"
+                    "Synced $synced of $attempted recent pending SMS"
                 }
 
                 _state.update {
@@ -105,7 +104,8 @@ class DeviceStatusViewModel @Inject constructor(
     private fun SMS.shouldSync(): Boolean {
         return status == SMSStatus.PROCESSING ||
             status == SMSStatus.ERROR ||
-            status == SMSStatus.SUSPICIOUS
+            status == SMSStatus.SUSPICIOUS ||
+            status == SMSStatus.NOT_STORED
     }
 }
 
