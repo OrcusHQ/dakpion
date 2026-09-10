@@ -22,8 +22,8 @@ import com.orcuspay.dakpion.presentation.theme.interFontFamily
 
 val NavigationItems = listOf(
     NavigationItem("home", R.drawable.ic_home, "Home"),
-    NavigationItem("analytics", R.drawable.ic_notification, "Analytics"),
-    NavigationItem("device", R.drawable.ic_alert, "Device"),
+    NavigationItem("analytics", R.drawable.ic_analytics, "Analytics"),
+    NavigationItem("device", R.drawable.ic_device, "Device"),
     NavigationItem("logs", R.drawable.ic_clipboard, "Logs"),
     NavigationItem("filters", R.drawable.ic_filter, "Filters"),
 )
