@@ -20,14 +20,14 @@ def hasReleaseKeystore = keystorePropertiesFile.exists() && keystoreProperties['
 
 android {
     namespace "com.orcuspay.dakpion"
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
-        applicationId "com.orcuspay.dakpion"
+        applicationId "com.dakpion.app"
         minSdk 26
-        targetSdk 34
-        versionCode 6
-        versionName "1.0.5"
+        targetSdk 36
+        versionCode 13
+        versionName "1.0.9"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -57,7 +57,8 @@ android {
             if (hasReleaseKeystore) {
                 signingConfig signingConfigs.release
             }
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
