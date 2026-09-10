@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Needed to read which SIM (subscription/slot) an SMS arrived on, for SIM filtering. -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
 
     <application

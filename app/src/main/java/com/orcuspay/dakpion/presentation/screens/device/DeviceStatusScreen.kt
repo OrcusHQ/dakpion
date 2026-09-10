@@ -1,5 +1,6 @@
 package com.orcuspay.dakpion.presentation.screens.device
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -8,6 +9,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,15 +26,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.orcuspay.dakpion.domain.model.DeviceInfo
 import com.orcuspay.dakpion.presentation.composables.Gap
 import com.orcuspay.dakpion.presentation.composables.TopBar
 import com.orcuspay.dakpion.presentation.composables.XButton
 import com.orcuspay.dakpion.presentation.theme.*
+import com.orcuspay.dakpion.util.SimInfoProvider
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun DeviceStatusScreen(
     viewModel: DeviceStatusViewModel = hiltViewModel(),
@@ -41,8 +48,17 @@ fun DeviceStatusScreen(
     val context = LocalContext.current
     val batteryOptimized = isBatteryOptimized(context)
 
+    val phonePermission = rememberPermissionState(Manifest.permission.READ_PHONE_STATE)
+
     LaunchedEffect(Unit) {
         viewModel.refreshDeviceInfo()
+    }
+
+    // Reload SIM info as soon as the phone-state permission is granted.
+    LaunchedEffect(phonePermission.status.isGranted) {
+        if (phonePermission.status.isGranted) {
+            viewModel.refreshDeviceInfo()
+        }
     }
 
     Scaffold(
@@ -65,6 +81,15 @@ fun DeviceStatusScreen(
                         openBatterySettings(context)
                     }
                 }
+            }
+
+            item {
+                SimSelectionCard(
+                    state = state,
+                    hasPermission = phonePermission.status.isGranted,
+                    onRequestPermission = { phonePermission.launchPermissionRequest() },
+                    onSelect = { slot -> viewModel.setSimSlotFilter(slot) },
+                )
             }
 
             item {
@@ -232,6 +257,113 @@ private fun DeviceInfoCard(
             InfoRow("App version", deviceInfo.appVersion)
             InfoRow("Last sync", lastSyncTime?.formatStatusDate() ?: "Not yet")
         }
+    }
+}
+
+@Composable
+private fun SimSelectionCard(
+    state: DeviceStatusState,
+    hasPermission: Boolean,
+    onRequestPermission: () -> Unit,
+    onSelect: (Int) -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        elevation = 0.dp,
+        backgroundColor = MaterialTheme.colors.surface,
+        border = BorderStroke(1.dp, BorderColor),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Read SMS from",
+                fontFamily = interFontFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = TextPrimary,
+            )
+            Gap(height = 6.dp)
+            Text(
+                text = "Choose which SIM's messages to sync. Use this if the phone has a second SIM whose SMS should be ignored.",
+                fontFamily = interFontFamily,
+                fontSize = 13.sp,
+                color = TextSecondary,
+                lineHeight = 19.sp,
+            )
+            Gap(height = 12.dp)
+
+            if (!hasPermission) {
+                Text(
+                    text = "Allow phone access so Dakpion can tell which SIM each message arrived on.",
+                    fontFamily = interFontFamily,
+                    fontSize = 13.sp,
+                    color = TextSecondary,
+                    lineHeight = 19.sp,
+                )
+                Gap(height = 10.dp)
+                OutlinedButton(
+                    onClick = onRequestPermission,
+                    shape = RoundedCornerShape(999.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        backgroundColor = Color.Transparent,
+                        contentColor = PrimaryColor,
+                    ),
+                    border = BorderStroke(1.dp, PrimaryColor.copy(alpha = 0.35f)),
+                ) {
+                    Text(
+                        text = "Allow phone access",
+                        fontFamily = interFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            } else {
+                val options: List<Pair<Int, String>> = buildList {
+                    if (state.sims.isNotEmpty()) {
+                        state.sims.forEach { add(it.slotIndex to it.label) }
+                    } else {
+                        add(0 to "SIM 1")
+                        add(1 to "SIM 2")
+                    }
+                    add(SimInfoProvider.SLOT_BOTH to "Both SIMs")
+                }
+                options.forEach { (slot, label) ->
+                    SimOptionRow(
+                        label = label,
+                        selected = state.simSlotFilter == slot,
+                        onClick = { onSelect(slot) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SimOptionRow(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = onClick,
+            colors = RadioButtonDefaults.colors(selectedColor = PrimaryColor),
+        )
+        Gap(width = 4.dp)
+        Text(
+            text = label,
+            fontFamily = interFontFamily,
+            fontSize = 14.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            color = TextPrimary,
+        )
     }
 }
 

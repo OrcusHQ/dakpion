@@ -14,6 +14,8 @@ import com.orcuspay.dakpion.domain.model.SMS
 import com.orcuspay.dakpion.domain.model.SMSStatus
 import com.orcuspay.dakpion.domain.repository.FilterRepository
 import com.orcuspay.dakpion.domain.repository.SmsRepository
+import com.orcuspay.dakpion.util.DakpionPreference
+import com.orcuspay.dakpion.util.SimInfoProvider
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,6 +26,8 @@ class SmsRepositoryImp @Inject constructor(
     application: Application,
     db: DakpionDatabase,
     private val filterRepository: FilterRepository,
+    private val dakpionPreference: DakpionPreference,
+    private val simInfoProvider: SimInfoProvider,
 ) : SmsRepository {
 
     private val dao = db.dao
@@ -33,6 +37,18 @@ class SmsRepositoryImp @Inject constructor(
         val credentials = dao.getCredentials().map { it.toCredential() }
         val filters = filterRepository.getEnabledFilters()
         val contentResolver: ContentResolver = context.contentResolver
+
+        // SIM filtering: when a specific slot is selected, only keep SMS that
+        // arrived on that SIM. If we can't resolve an SMS's slot (permission
+        // missing, or the device doesn't report it) we keep it, so we never
+        // drop a real payment SMS just because the SIM was unknown.
+        val simSlotFilter = dakpionPreference.getSimSlotFilter()
+        val subIdToSlot: Map<Int, Int> =
+            if (simSlotFilter != SimInfoProvider.SLOT_BOTH) {
+                simInfoProvider.getSubscriptionIdToSlot()
+            } else {
+                emptyMap()
+            }
 
         val selection = "${Telephony.Sms.Inbox.DATE} >= ?"
         val selectionArgs = arrayOf(
@@ -46,7 +62,8 @@ class SmsRepositoryImp @Inject constructor(
                 Telephony.Sms.Inbox._ID,
                 Telephony.Sms.Inbox.ADDRESS,
                 Telephony.Sms.Inbox.DATE,
-                Telephony.Sms.Inbox.BODY
+                Telephony.Sms.Inbox.BODY,
+                Telephony.Sms.Inbox.SUBSCRIPTION_ID
             ),
             selection,
             selectionArgs,
@@ -58,11 +75,23 @@ class SmsRepositoryImp @Inject constructor(
             return
         }
 
+        val subIdColumn = cursor.getColumnIndex(Telephony.Sms.Inbox.SUBSCRIPTION_ID)
+
         while (!cursor.isAfterLast) {
             val id = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.Inbox._ID))
             val creator = cursor.getString(cursor.getColumnIndex(Telephony.Sms.Inbox.ADDRESS))
             val date = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.Inbox.DATE))
             val body = cursor.getString(cursor.getColumnIndex(Telephony.Sms.Inbox.BODY))
+
+            // Skip SMS from a non-selected SIM (only when we can resolve its slot).
+            if (simSlotFilter != SimInfoProvider.SLOT_BOTH && subIdColumn >= 0) {
+                val subId = cursor.getInt(subIdColumn)
+                val slot = subIdToSlot[subId]
+                if (slot != null && slot != simSlotFilter) {
+                    cursor.moveToNext()
+                    continue
+                }
+            }
 
             credentials.forEach { credential ->
                 var sms = SMS(

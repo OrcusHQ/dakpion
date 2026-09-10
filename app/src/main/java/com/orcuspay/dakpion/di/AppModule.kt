@@ -8,6 +8,7 @@ import com.orcuspay.dakpion.data.remote.DakpionApi
 import com.orcuspay.dakpion.data.remote.retrofit.NetworkResponseAdapterFactory
 import com.orcuspay.dakpion.util.DakpionPreference
 import com.orcuspay.dakpion.util.NotificationHelper
+import com.orcuspay.dakpion.util.SimInfoProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -85,5 +86,13 @@ object AppModule {
         app: Application
     ): NotificationHelper {
         return NotificationHelper(app.applicationContext)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSimInfoProvider(
+        app: Application
+    ): SimInfoProvider {
+        return SimInfoProvider(app.applicationContext)
     }
 }

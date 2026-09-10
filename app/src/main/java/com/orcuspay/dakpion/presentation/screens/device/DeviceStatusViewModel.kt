@@ -10,6 +10,8 @@ import com.orcuspay.dakpion.domain.repository.DakpionRepository
 import com.orcuspay.dakpion.domain.repository.SmsRepository
 import com.orcuspay.dakpion.util.DakpionPreference
 import com.orcuspay.dakpion.util.DeviceInfoProvider
+import com.orcuspay.dakpion.util.SimInfoProvider
+import com.orcuspay.dakpion.util.SimOption
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,12 +27,16 @@ class DeviceStatusViewModel @Inject constructor(
     private val dakpionPreference: DakpionPreference,
     private val dakpionRepository: DakpionRepository,
     private val smsRepository: SmsRepository,
+    private val simInfoProvider: SimInfoProvider,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
         DeviceStatusState(
             deviceInfo = deviceInfoProvider.getDeviceInfo(),
             lastSyncTime = dakpionPreference.getLastSyncTime(),
+            sims = simInfoProvider.getSims(),
+            simSlotFilter = dakpionPreference.getSimSlotFilter(),
+            hasPhonePermission = simInfoProvider.hasPermission(),
         )
     )
     val state: StateFlow<DeviceStatusState> = _state.asStateFlow()
@@ -40,8 +46,16 @@ class DeviceStatusViewModel @Inject constructor(
             it.copy(
                 deviceInfo = deviceInfoProvider.getDeviceInfo(),
                 lastSyncTime = dakpionPreference.getLastSyncTime(),
+                sims = simInfoProvider.getSims(),
+                simSlotFilter = dakpionPreference.getSimSlotFilter(),
+                hasPhonePermission = simInfoProvider.hasPermission(),
             )
         }
+    }
+
+    fun setSimSlotFilter(slot: Int) {
+        dakpionPreference.setSimSlotFilter(slot)
+        _state.update { it.copy(simSlotFilter = slot) }
     }
 
     fun syncNow() {
@@ -115,4 +129,7 @@ data class DeviceStatusState(
     val syncing: Boolean = false,
     val message: String? = null,
     val error: String? = null,
+    val sims: List<SimOption> = emptyList(),
+    val simSlotFilter: Int = SimInfoProvider.SLOT_BOTH,
+    val hasPhonePermission: Boolean = false,
 )
