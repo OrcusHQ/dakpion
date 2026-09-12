@@ -66,11 +66,19 @@ class DakpionKamla @AssistedInject constructor(
                 if (credential.enabled) {
                     smsList
                         .filter {
+                            // Only retry messages that never got a definitive
+                            // server verdict: PROCESSING (never acked) and ERROR
+                            // (transient network/5xx). NOT_STORED is a terminal
+                            // "this is not a payment" decision — re-sending it
+                            // every cycle floods the API forever (a non-payment
+                            // is never stored, so its body never dedupes to a
+                            // 409 to make it stop). SUSPICIOUS still needs its
+                            // first upload; it self-terminates to DUPLICATE on
+                            // the next cycle once the server has stored it.
                             (
                                 it.status == SMSStatus.PROCESSING ||
                                     it.status == SMSStatus.ERROR ||
-                                    it.status == SMSStatus.SUSPICIOUS ||
-                                    it.status == SMSStatus.NOT_STORED
+                                    it.status == SMSStatus.SUSPICIOUS
                                 )
                         }
                         .forEach { sms ->
