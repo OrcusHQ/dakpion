@@ -219,9 +219,11 @@ fun HomeScreen(
                         ) {
                             CredentialCard(
                                 credential = credential,
-                            ) {
-                                viewModel.setCredentialEnabled(credential, it)
-                            }
+                                onEnabledChange = {
+                                    viewModel.setCredentialEnabled(credential, it)
+                                },
+                                onDelete = { credentialToDelete = credential },
+                            )
                         }
                     }
                 }

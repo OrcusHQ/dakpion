@@ -21,6 +21,9 @@ interface DakpionDao {
     @Delete
     suspend fun deleteCredential(credentialEntity: CredentialEntity)
 
+    @Query("DELETE FROM smsentity WHERE credentialId = :credentialId")
+    suspend fun deleteSmsByCredential(credentialId: Int)
+
     @Transaction
     @Query("SELECT * FROM credentialentity")
     suspend fun getCredentialsWithSMS(): List<CredentialEntitiesWithSMSEntities>

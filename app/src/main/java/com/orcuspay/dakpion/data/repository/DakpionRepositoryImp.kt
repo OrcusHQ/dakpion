@@ -271,6 +271,9 @@ class DakpionRepositoryImp @Inject constructor(
     }
 
     override suspend fun deleteCredential(credential: Credential) {
+        // Remove the business's local SMS history first, then the credential
+        // itself, so a removed business leaves nothing behind on the device.
+        dao.deleteSmsByCredential(credential.id)
         dao.deleteCredential(credential.toCredentialEntity())
     }
 

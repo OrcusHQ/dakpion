@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +30,7 @@ import com.orcuspay.dakpion.util.ifTrue
 fun CredentialCard(
     credential: Credential,
     onEnabledChange: (value: Boolean) -> Unit,
+    onDelete: () -> Unit = {},
 ) {
     Card(
         modifier = Modifier
@@ -103,8 +105,18 @@ fun CredentialCard(
             XSwitch(
                 value = credential.enabled,
                 onValueChange = onEnabledChange,
-                modifier = Modifier.padding(end = 16.dp)
             )
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_delete),
+                    contentDescription = "Remove business",
+                    tint = Color(0xFFDF1B41),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }
