@@ -12,7 +12,9 @@ import com.orcuspay.dakpion.data.mapper.toSMS
 import com.orcuspay.dakpion.data.mapper.toSMSEntity
 import com.orcuspay.dakpion.domain.model.SMS
 import com.orcuspay.dakpion.domain.model.SMSStatus
+import com.orcuspay.dakpion.domain.model.SenderRules
 import com.orcuspay.dakpion.domain.repository.FilterRepository
+import com.orcuspay.dakpion.domain.repository.SenderRulesRepository
 import com.orcuspay.dakpion.domain.repository.SmsRepository
 import com.orcuspay.dakpion.util.DakpionPreference
 import com.orcuspay.dakpion.util.SimInfoProvider
@@ -26,6 +28,7 @@ class SmsRepositoryImp @Inject constructor(
     application: Application,
     db: DakpionDatabase,
     private val filterRepository: FilterRepository,
+    private val senderRulesRepository: SenderRulesRepository,
     private val dakpionPreference: DakpionPreference,
     private val simInfoProvider: SimInfoProvider,
 ) : SmsRepository {
@@ -36,6 +39,15 @@ class SmsRepositoryImp @Inject constructor(
     override suspend fun loadSMSAfter(after: Date) {
         val credentials = dao.getCredentials().map { it.toCredential() }
         val filters = filterRepository.getEnabledFilters()
+
+        // Refresh server-driven sender rules (whitelist + blocked/negative) for
+        // each business, then resolve them per credential. Network failures fall
+        // back to the last-known rules, or SenderRules.DEFAULT.
+        senderRulesRepository.refreshIfStale(credentials)
+        val rulesByCredential = credentials.associate { credential ->
+            credential.id to senderRulesRepository.getRules(credential.accessKey)
+        }
+
         val contentResolver: ContentResolver = context.contentResolver
 
         // SIM filtering: when a specific slot is selected, only keep SMS that
@@ -103,25 +115,14 @@ class SmsRepositoryImp @Inject constructor(
                     status = SMSStatus.PROCESSING,
                 )
 
-                val supportedSenders = listOf(
-                    "bKash",
-                    "nagad",
-                    "upay",
-                    "16216",
-                    "IBBL",
-                    "01847-348685",
-                    "16259",
-                    "pathaopay",
-                    "telecash",
-                    "ipay",
-                    "tap",
-                )
+                val rules = rulesByCredential[credential.id] ?: SenderRules.DEFAULT
 
-                if (
-                    supportedSenders.any { f ->
-                        sms.sender.lowercase().contains(f.lowercase())
-                    } && credential.enabled
-                ) {
+                if (rules.isSenderAllowed(sms.sender) && credential.enabled) {
+
+                    // Drop OTP/PIN-style bodies before storing/forwarding.
+                    if (rules.isNegativeBody(body)) {
+                        return@forEach
+                    }
 
                     if (sms.sender.lowercase().contains("ibbl")) {
                         if (!sms.body.lowercase().contains("cellfin")) {

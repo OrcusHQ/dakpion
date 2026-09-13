@@ -48,4 +48,12 @@ class DakpionPreference(
     fun setSimSlotFilter(slot: Int) {
         pref.edit().putInt(SIM_SLOT_FILTER, slot).apply()
     }
+
+    fun putString(key: String, value: String) {
+        pref.edit().putString(key, value).apply()
+    }
+
+    fun getString(key: String): String? {
+        return pref.getString(key, null)
+    }
 }
