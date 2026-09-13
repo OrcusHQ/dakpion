@@ -2,9 +2,11 @@ package com.orcuspay.dakpion.di
 
 import com.orcuspay.dakpion.data.repository.DakpionRepositoryImp
 import com.orcuspay.dakpion.data.repository.FilterRepositoryImp
+import com.orcuspay.dakpion.data.repository.SenderRulesRepositoryImp
 import com.orcuspay.dakpion.data.repository.SmsRepositoryImp
 import com.orcuspay.dakpion.domain.repository.DakpionRepository
 import com.orcuspay.dakpion.domain.repository.FilterRepository
+import com.orcuspay.dakpion.domain.repository.SenderRulesRepository
 import com.orcuspay.dakpion.domain.repository.SmsRepository
 import dagger.Binds
 import dagger.Module
@@ -34,4 +36,10 @@ abstract class RepositoryModule {
     abstract fun bindFilterRepository(
         filterRepository: FilterRepositoryImp
     ): FilterRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSenderRulesRepository(
+        senderRulesRepository: SenderRulesRepositoryImp
+    ): SenderRulesRepository
 }

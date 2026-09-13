@@ -1,7 +1,9 @@
 package com.orcuspay.dakpion.data.remote
 
+import com.orcuspay.dakpion.data.remote.dto.request.FilterRulesRequestDto
 import com.orcuspay.dakpion.data.remote.dto.request.SendMessageRequestDto
 import com.orcuspay.dakpion.data.remote.dto.request.VerifyRequestDto
+import com.orcuspay.dakpion.data.remote.dto.response.FilterRulesResponseDto
 import com.orcuspay.dakpion.data.remote.dto.response.SendMessageResponseDto
 import com.orcuspay.dakpion.data.remote.dto.response.VerifyResponseDto
 import retrofit2.http.Body
@@ -14,6 +16,11 @@ interface DakpionApi {
 
     @POST("dakpion")
     suspend fun send(@Body sendMessageRequestDto: SendMessageRequestDto): Result<SendMessageResponseDto>
+
+    @POST("dakpion/filters")
+    suspend fun getFilterRules(
+        @Body filterRulesRequestDto: FilterRulesRequestDto,
+    ): Result<FilterRulesResponseDto>
 
     companion object {
         const val BASE_URL = "https://brain.orcuspay.com/api/"
