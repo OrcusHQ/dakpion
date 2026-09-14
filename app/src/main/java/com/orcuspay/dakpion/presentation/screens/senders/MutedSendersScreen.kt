@@ -22,8 +22,9 @@ import com.orcuspay.dakpion.presentation.theme.PrimaryColor
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
 
-// Sender key (as sent by HQ / matched in the whitelist) -> friendly label.
-private val KNOWN_SENDERS = listOf(
+// Friendly labels for well-known sender keys. Any sender not listed here
+// (e.g. a merchant's Bangla QR bank) is shown by its raw name.
+private val SENDER_LABELS = mapOf(
     "bkash" to "bKash",
     "nagad" to "Nagad",
     "16216" to "Rocket",
@@ -37,12 +38,16 @@ private val KNOWN_SENDERS = listOf(
     "01847-348685" to "OkWallet",
 )
 
+private fun labelFor(sender: String): String =
+    SENDER_LABELS[sender.lowercase()] ?: sender
+
 @Destination
 @Composable
 fun MutedSendersScreen(
     viewModel: MutedSendersViewModel = hiltViewModel(),
 ) {
     val disabled = viewModel.disabled
+    val senders = viewModel.senders
 
     Scaffold(
         topBar = { TopBar(title = "SMS Senders") },
@@ -66,9 +71,9 @@ fun MutedSendersScreen(
                 Gap(height = 4.dp)
             }
 
-            items(KNOWN_SENDERS) { pair ->
-                val key = pair.first
-                val label = pair.second
+            items(senders) { sender ->
+                val key = sender.lowercase()
+                val label = labelFor(sender)
                 val active = !disabled.contains(key)
 
                 Row(
