@@ -19,17 +19,9 @@ class SenderRulesRepositoryImp @Inject constructor(
     private val preference: DakpionPreference,
 ) : SenderRulesRepository {
 
-    override suspend fun refreshIfStale(credentials: List<Credential>) {
+    override suspend fun refresh(credentials: List<Credential>) {
         val now = System.currentTimeMillis()
         for (credential in credentials) {
-            val cached = readCache(credential.accessKey)
-            val intervalMs =
-                (cached?.checkIntervalHours ?: SenderRules.DEFAULT.checkIntervalHours)
-                    .coerceAtLeast(1) * 60L * 60L * 1000L
-            val fetchedAt = readFetchedAt(credential.accessKey)
-            val isStale = fetchedAt == null || (now - fetchedAt) > intervalMs
-            if (!isStale) continue
-
             try {
                 val result = api.getFilterRules(
                     FilterRulesRequestDto(

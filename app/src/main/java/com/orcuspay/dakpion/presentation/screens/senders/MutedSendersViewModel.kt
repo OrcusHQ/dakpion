@@ -37,6 +37,9 @@ class MutedSendersViewModel @Inject constructor(
     private fun load() {
         viewModelScope.launch {
             val credentials = dao.getCredentials().map { it.toCredential() }
+            // Pull the latest rules from the server so a just-configured sender
+            // shows up immediately instead of after a cache TTL.
+            senderRulesRepository.refresh(credentials)
             val union = linkedSetOf<String>()
             if (credentials.isEmpty()) {
                 union.addAll(SenderRules.DEFAULT.allowedSenders)
