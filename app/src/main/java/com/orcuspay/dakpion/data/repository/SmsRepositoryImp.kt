@@ -43,7 +43,7 @@ class SmsRepositoryImp @Inject constructor(
         // Refresh server-driven sender rules (whitelist + blocked/negative) for
         // each business, then resolve them per credential. Network failures fall
         // back to the last-known rules, or SenderRules.DEFAULT.
-        senderRulesRepository.refreshIfStale(credentials)
+        senderRulesRepository.refresh(credentials)
         val rulesByCredential = credentials.associate { credential ->
             credential.id to senderRulesRepository.getRules(credential.accessKey)
         }
