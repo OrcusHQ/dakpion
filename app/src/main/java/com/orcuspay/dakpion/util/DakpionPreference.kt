@@ -56,4 +56,35 @@ class DakpionPreference(
     fun getString(key: String): String? {
         return pref.getString(key, null)
     }
+
+    // --- #2 Durable outbox: per-SMS send-attempt counter (no DB schema change) ---
+
+    fun getSendAttempts(smsId: Int): Int {
+        return pref.getInt("$SEND_ATTEMPTS_PREFIX$smsId", 0)
+    }
+
+    fun incrementSendAttempts(smsId: Int): Int {
+        val next = getSendAttempts(smsId) + 1
+        pref.edit().putInt("$SEND_ATTEMPTS_PREFIX$smsId", next).apply()
+        return next
+    }
+
+    fun clearSendAttempts(smsId: Int) {
+        pref.edit().remove("$SEND_ATTEMPTS_PREFIX$smsId").apply()
+    }
+
+    // --- #4 Sender mute: locally-disabled senders (strictly subtractive) ---
+
+    fun getDisabledSenders(): Set<String> {
+        return pref.getStringSet(DISABLED_SENDERS, emptySet())?.toSet() ?: emptySet()
+    }
+
+    fun setDisabledSenders(senders: Set<String>) {
+        pref.edit().putStringSet(DISABLED_SENDERS, senders).apply()
+    }
+
+    companion object {
+        private const val SEND_ATTEMPTS_PREFIX = "SEND_ATTEMPTS_"
+        private const val DISABLED_SENDERS = "DISABLED_SENDERS"
+    }
 }

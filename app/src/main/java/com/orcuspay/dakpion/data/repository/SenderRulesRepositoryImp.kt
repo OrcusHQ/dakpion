@@ -52,7 +52,16 @@ class SenderRulesRepositoryImp @Inject constructor(
     }
 
     override fun getRules(accessKey: String): SenderRules {
-        return readCache(accessKey) ?: SenderRules.DEFAULT
+        val base = readCache(accessKey) ?: SenderRules.DEFAULT
+        // #4 Sender mute: locally-disabled senders are removed from the
+        // whitelist. Strictly subtractive — can only ever narrow the list, never
+        // add a sender HQ didn't whitelist.
+        val disabled = preference.getDisabledSenders()
+        if (disabled.isEmpty()) return base
+        val filtered = base.allowedSenders.filter { sender ->
+            disabled.none { d -> sender.equals(d, ignoreCase = true) }
+        }
+        return base.copy(allowedSenders = filtered)
     }
 
     // ---- cache (SharedPreferences JSON, keyed by accessKey) ----

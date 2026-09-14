@@ -25,8 +25,8 @@ class SmsReceiver : BroadcastReceiver() {
                     .setConstraints(constraints)
                     .setInitialDelay(5L, TimeUnit.SECONDS)
                     .setBackoffCriteria(
-                        BackoffPolicy.LINEAR,
-                        2L,
+                        BackoffPolicy.EXPONENTIAL,
+                        1L,
                         TimeUnit.MINUTES
                     )
                     .addTag(DakpionKamla.TAG)
