@@ -124,6 +124,11 @@ class SmsRepositoryImp @Inject constructor(
                         return@forEach
                     }
 
+                    // If HQ configured positive keywords, require one (no-op when unset).
+                    if (!rules.passesPositiveKeywords(body)) {
+                        return@forEach
+                    }
+
                     if (sms.sender.lowercase().contains("ibbl")) {
                         if (!sms.body.lowercase().contains("cellfin")) {
                             return@forEach

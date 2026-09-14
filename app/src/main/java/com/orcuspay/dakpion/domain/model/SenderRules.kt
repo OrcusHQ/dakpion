@@ -29,6 +29,17 @@ data class SenderRules(
         return negativeKeywords.any { it.isNotBlank() && b.contains(it.lowercase()) }
     }
 
+    /**
+     * When the server configures positive keywords (e.g. "received", "credited"),
+     * the body must contain at least one to pass. Empty list = no-op, so this can
+     * never drop a payment unless HQ opts in.
+     */
+    fun passesPositiveKeywords(body: String): Boolean {
+        if (positiveKeywords.isEmpty()) return true
+        val b = body.lowercase()
+        return positiveKeywords.any { it.isNotBlank() && b.contains(it.lowercase()) }
+    }
+
     companion object {
         /**
          * Fail-safe fallback = the app's historical hardcoded behavior. Used
