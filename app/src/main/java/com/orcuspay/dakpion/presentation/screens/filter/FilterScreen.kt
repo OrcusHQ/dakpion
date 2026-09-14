@@ -6,7 +6,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -28,6 +34,7 @@ import com.orcuspay.dakpion.R
 import com.orcuspay.dakpion.domain.model.Filter
 import com.orcuspay.dakpion.presentation.composables.*
 import com.orcuspay.dakpion.presentation.screens.destinations.AddNewFilterScreenDestination
+import com.orcuspay.dakpion.presentation.screens.destinations.MutedSendersScreenDestination
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -137,6 +144,40 @@ fun FilterScreen(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colors.surface)
+                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+                    .clickable { navigator.navigate(MutedSendersScreenDestination) }
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Manage SMS senders",
+                        fontFamily = interFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp,
+                        color = Color(0xFF1E293B)
+                    )
+                    Text(
+                        text = "Turn specific wallets on or off on this phone",
+                        fontFamily = interFontFamily,
+                        fontSize = 12.sp,
+                        color = Color(0xFF64748B)
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = Color(0xFF64748B)
+                )
+            }
 
             if (filters.isNotEmpty()) {
                 LazyColumn(

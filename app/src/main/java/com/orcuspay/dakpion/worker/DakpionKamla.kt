@@ -34,6 +34,9 @@ class DakpionKamla @AssistedInject constructor(
         const val TAG = "dakpionkamla"
         private const val FIRST_SYNC_LOOKBACK_MS = 24L * 60L * 60L * 1000L
         private const val AUTO_SYNC_LOOKBACK_MS = 5L * 60L * 1000L
+        // Stop retrying a single SMS after this many failed uploads, so a
+        // permanently-failing message never hammers the API forever.
+        private const val MAX_SEND_ATTEMPTS = 25
     }
 
     override suspend fun doWork(): Result {
@@ -82,6 +85,12 @@ class DakpionKamla @AssistedInject constructor(
                                 )
                         }
                         .forEach { sms ->
+                            // Retry cap: give up on a single SMS after too many
+                            // failed uploads so it stops flooding the API.
+                            if (dakpionPreference.getSendAttempts(sms.smsId) >= MAX_SEND_ATTEMPTS) {
+                                return@forEach
+                            }
+
                             val result = dakpionRepository.send(
                                 credential = credential,
                                 sms = sms
@@ -90,6 +99,7 @@ class DakpionKamla @AssistedInject constructor(
                                 is ApiResult.Error -> {
                                     if (result.exception !is InvalidCredentialException) {
                                         hasError = true
+                                        dakpionPreference.incrementSendAttempts(sms.smsId)
                                     } else {
                                         notificationHelper.showNotification(
                                             notificationId = credential.id,
@@ -101,6 +111,7 @@ class DakpionKamla @AssistedInject constructor(
                                 is ApiResult.Success -> {
                                     successCount++
                                     lastSuccessfulSms = sms
+                                    dakpionPreference.clearSendAttempts(sms.smsId)
                                 }
                             }
                         }
