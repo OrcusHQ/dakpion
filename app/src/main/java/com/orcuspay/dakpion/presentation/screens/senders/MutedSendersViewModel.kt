@@ -37,19 +37,24 @@ class MutedSendersViewModel @Inject constructor(
     private fun load() {
         viewModelScope.launch {
             val credentials = dao.getCredentials().map { it.toCredential() }
-            // Pull the latest rules from the server so a just-configured sender
-            // shows up immediately instead of after a cache TTL.
+            // Show the cached list immediately (no empty flash), then refresh
+            // from the server and update so a just-configured sender appears.
+            senders = computeSenders(credentials)
             senderRulesRepository.refresh(credentials)
-            val union = linkedSetOf<String>()
-            if (credentials.isEmpty()) {
-                union.addAll(SenderRules.DEFAULT.allowedSenders)
-            } else {
-                credentials.forEach { c ->
-                    union.addAll(senderRulesRepository.getWhitelist(c.accessKey))
-                }
-            }
-            senders = union.toList()
+            senders = computeSenders(credentials)
         }
+    }
+
+    private fun computeSenders(credentials: List<com.orcuspay.dakpion.domain.model.Credential>): List<String> {
+        val union = linkedSetOf<String>()
+        if (credentials.isEmpty()) {
+            union.addAll(SenderRules.DEFAULT.allowedSenders)
+        } else {
+            credentials.forEach { c ->
+                union.addAll(senderRulesRepository.getWhitelist(c.accessKey))
+            }
+        }
+        return union.toList()
     }
 
     fun setMuted(senderKey: String, muted: Boolean) {
