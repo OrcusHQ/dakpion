@@ -71,6 +71,7 @@ android {
     }
     buildFeatures {
         compose true
+        buildConfig true
     }
     composeOptions {
         kotlinCompilerExtensionVersion '1.5.6' // Compatible with Kotlin 1.9.21
