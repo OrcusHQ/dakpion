@@ -36,7 +36,6 @@ import com.orcuspay.dakpion.presentation.composables.TopBar
 import com.orcuspay.dakpion.presentation.composables.XButton
 import com.orcuspay.dakpion.presentation.theme.*
 import com.orcuspay.dakpion.util.BackgroundProtection
-import com.orcuspay.dakpion.util.BackgroundTest
 import com.orcuspay.dakpion.util.SimInfoProvider
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -96,10 +95,6 @@ fun DeviceStatusScreen(
                     status = protection,
                     onOpenAutostart = { BackgroundProtection.openAutostartSettings(context) },
                     onOpenBattery = { BackgroundProtection.openBatterySettings(context) },
-                    onRunTest = {
-                        BackgroundProtection.startBackgroundTest(context)
-                        protection = BackgroundProtection.status(context)
-                    },
                 )
             }
 
@@ -207,36 +202,10 @@ private fun BackgroundProtectionCard(
     status: BackgroundProtection.Status,
     onOpenAutostart: () -> Unit,
     onOpenBattery: () -> Unit,
-    onRunTest: () -> Unit,
 ) {
     val attention = status.needsAttention
     val titleColor = if (attention) WarningText else SuccessText
     val bodyColor = if (attention) WarningText.copy(alpha = 0.82f) else SuccessText.copy(alpha = 0.82f)
-
-    val testValue: String
-    val testOk: Boolean
-    when (status.test) {
-        BackgroundTest.Result.PASSED -> {
-            testValue = "Verified ${status.testAt?.let { Date(it).formatStatusTime() } ?: ""}".trim()
-            testOk = true
-        }
-        BackgroundTest.Result.PENDING -> {
-            testValue = "Testing… close Dakpion from Recent apps, come back in 2 min"
-            testOk = false
-        }
-        BackgroundTest.Result.FAILED -> {
-            testValue = "Failed — phone blocked Dakpion. Turn Autostart ON, then test again"
-            testOk = false
-        }
-        BackgroundTest.Result.FOREGROUND -> {
-            testValue = "Not valid — Dakpion stayed open. Test again and close it"
-            testOk = false
-        }
-        BackgroundTest.Result.NOT_RUN -> {
-            testValue = "Not tested yet"
-            testOk = false
-        }
-    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -266,12 +235,6 @@ private fun BackgroundProtectionCard(
                 lineHeight = 20.sp,
             )
             Gap(height = 12.dp)
-
-            ProtectionRow(
-                label = "Background test",
-                value = testValue,
-                ok = testOk,
-            )
 
             ProtectionRow(
                 label = "Background service",
@@ -311,17 +274,9 @@ private fun BackgroundProtectionCard(
 
             Gap(height = 12.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ProtectionButton(
-                    text = if (status.test == BackgroundTest.Result.PENDING) "Testing…" else "Test background",
-                    color = titleColor,
-                    onClick = onRunTest,
-                )
                 if (status.hasAutostartManager) {
                     ProtectionButton(text = "Open Autostart", color = titleColor, onClick = onOpenAutostart)
                 }
-            }
-            if (status.batteryOptimized || status.backgroundRestricted) {
-                Gap(height = 8.dp)
                 ProtectionButton(text = "Battery settings", color = titleColor, onClick = onOpenBattery)
             }
         }
@@ -573,8 +528,4 @@ private fun StatusMessage(
 
 private fun Date.formatStatusDate(): String {
     return SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(this)
-}
-
-private fun Date.formatStatusTime(): String {
-    return SimpleDateFormat("hh:mm a", Locale.getDefault()).format(this)
 }

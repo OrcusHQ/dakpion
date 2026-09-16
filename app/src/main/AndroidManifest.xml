@@ -98,11 +98,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- Background self-test alarm target (explicit PendingIntent only). -->
-        <receiver
-            android:name=".BackgroundTestReceiver"
-            android:exported="false" />
-
         <!-- Persistent keep-alive service (see SmsKeepAliveService). -->
         <service
             android:name=".SmsKeepAliveService"
