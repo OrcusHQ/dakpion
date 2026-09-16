@@ -37,11 +37,19 @@ object BackgroundProtection {
         val batteryOptimized: Boolean,
         val backgroundRestricted: Boolean,
         val keepAliveRunning: Boolean,
+        val test: BackgroundTest.Result,
+        val testAt: Long?,
     ) {
         /** True when the OEM has its own app-killer the merchant must configure. */
         val hasAutostartManager: Boolean get() = oem != Oem.OTHER && oem != Oem.SAMSUNG
+
+        /**
+         * Green only when everything we can measure is fine AND the background
+         * self-test has passed — that's the proof the OEM lets us wake up.
+         */
         val needsAttention: Boolean
-            get() = batteryOptimized || backgroundRestricted || !keepAliveRunning || oem != Oem.OTHER
+            get() = batteryOptimized || backgroundRestricted || !keepAliveRunning ||
+                test != BackgroundTest.Result.PASSED
     }
 
     fun detectOem(): Oem {
@@ -58,12 +66,21 @@ object BackgroundProtection {
         }
     }
 
-    fun status(context: Context): Status = Status(
-        oem = detectOem(),
-        batteryOptimized = isBatteryOptimized(context),
-        backgroundRestricted = isBackgroundRestricted(context),
-        keepAliveRunning = SmsKeepAliveService.isRunning,
-    )
+    fun status(context: Context): Status {
+        val (test, testAt) = BackgroundTest.status(DakpionPreference(context.applicationContext))
+        return Status(
+            oem = detectOem(),
+            batteryOptimized = isBatteryOptimized(context),
+            backgroundRestricted = isBackgroundRestricted(context),
+            keepAliveRunning = SmsKeepAliveService.isRunning,
+            test = test,
+            testAt = testAt,
+        )
+    }
+
+    fun startBackgroundTest(context: Context) {
+        BackgroundTest.start(context, DakpionPreference(context.applicationContext))
+    }
 
     fun steps(oem: Oem): List<String> = when (oem) {
         Oem.TRANSSION -> listOf(

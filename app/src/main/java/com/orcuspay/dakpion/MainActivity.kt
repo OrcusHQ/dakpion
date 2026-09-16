@@ -30,8 +30,21 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var text: String
 
+    companion object {
+        /** True while the UI is visible; the background self-test uses it. */
+        @Volatile
+        var inForeground: Boolean = false
+            private set
+    }
+
+    override fun onStop() {
+        inForeground = false
+        super.onStop()
+    }
+
     override fun onStart() {
         super.onStart()
+        inForeground = true
         // Opening the app always forces a sync, so a merchant checking the
         // app never has to wait for the periodic job or press "Sync now".
         SyncScheduler.enqueueImmediate(applicationContext)
