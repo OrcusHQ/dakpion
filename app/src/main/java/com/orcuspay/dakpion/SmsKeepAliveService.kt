@@ -1,15 +1,33 @@
 package com.orcuspay.dakpion
 
+import android.Manifest
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.database.ContentObserver
+import android.net.Uri
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
+import android.provider.Telephony
 import android.util.Log
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.orcuspay.dakpion.util.NotificationHelper
+import com.orcuspay.dakpion.worker.SmsSyncer
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Keeps the Dakpion process alive in the background with a persistent, silent
@@ -27,9 +45,63 @@ import com.orcuspay.dakpion.util.NotificationHelper
  */
 class SmsKeepAliveService : Service() {
 
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface KeepAliveEntryPoint {
+        fun smsSyncer(): SmsSyncer
+    }
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var inboxObserver: ContentObserver? = null
+    private var pendingSync: Job? = null
+
     override fun onCreate() {
         super.onCreate()
         promote()
+        watchInbox()
+    }
+
+    /**
+     * Second, independent capture path: watch the SMS database itself.
+     *
+     * SMS_RECEIVED is an *ordered* broadcast — any app registered above us
+     * (Truecaller, some OEM spam filters) can abort it and [SmsReceiver] never
+     * fires. But the default messaging app still writes the SMS to the inbox,
+     * and that write is observable. So while this service is alive, every
+     * inbox change triggers a fast sync (debounced), whatever happened to the
+     * broadcast.
+     */
+    private fun watchInbox() {
+        if (inboxObserver != null) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) return
+
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean, uri: Uri?) {
+                // Several notifications arrive per SMS (insert, thread update,
+                // read flag…). Coalesce them into one sync shortly after the
+                // last one.
+                pendingSync?.cancel()
+                pendingSync = scope.launch {
+                    delay(INBOX_DEBOUNCE_MS)
+                    try {
+                        EntryPointAccessors
+                            .fromApplication(applicationContext, KeepAliveEntryPoint::class.java)
+                            .smsSyncer()
+                            .sync(fast = true)
+                    } catch (e: Exception) {
+                        Log.d("kraken", "Inbox-observer sync failed: ${e.message}")
+                    }
+                }
+            }
+        }
+        try {
+            contentResolver.registerContentObserver(Telephony.Sms.CONTENT_URI, true, observer)
+            inboxObserver = observer
+        } catch (e: Exception) {
+            Log.d("kraken", "Could not observe inbox: ${e.message}")
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -40,6 +112,9 @@ class SmsKeepAliveService : Service() {
 
     override fun onDestroy() {
         isRunning = false
+        inboxObserver?.let { contentResolver.unregisterContentObserver(it) }
+        inboxObserver = null
+        pendingSync?.cancel()
         super.onDestroy()
     }
 
@@ -78,6 +153,8 @@ class SmsKeepAliveService : Service() {
     }
 
     companion object {
+        private const val INBOX_DEBOUNCE_MS = 800L
+
         /** Best-effort, read by the Device tab to show whether protection is active. */
         @Volatile
         var isRunning: Boolean = false

@@ -80,9 +80,11 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- Max priority: SMS_RECEIVED is an ordered broadcast and apps above us
+             (Truecaller etc.) can abort it before we see the SMS. -->
         <receiver android:name=".SmsReceiver"
             android:exported="true">
-            <intent-filter android:priority="2147483646" >
+            <intent-filter android:priority="2147483647" >
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
