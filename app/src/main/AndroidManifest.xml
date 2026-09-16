@@ -70,6 +70,12 @@
             android:authorities="${applicationId}.androidx-startup"
             tools:node="remove" />
 
+        <!-- Read-only diagnostics trail (see DiagProvider). -->
+        <provider
+            android:name=".DiagProvider"
+            android:authorities="${applicationId}.diag"
+            android:exported="true" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

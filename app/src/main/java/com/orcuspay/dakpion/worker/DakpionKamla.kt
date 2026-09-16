@@ -7,6 +7,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import com.orcuspay.dakpion.util.Diag
 import com.orcuspay.dakpion.util.NotificationHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -32,6 +33,7 @@ class DakpionKamla @AssistedInject constructor(
     }
 
     override suspend fun doWork(): Result {
+        Diag.log("worker: run attempt=$runAttemptCount")
         return when (smsSyncer.sync()) {
             SmsSyncer.Outcome.SUCCESS -> Result.success()
             SmsSyncer.Outcome.RETRY -> Result.retry()

@@ -4,14 +4,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
-import android.util.Log
 import androidx.work.ExistingWorkPolicy
+import com.orcuspay.dakpion.util.Diag
 import com.orcuspay.dakpion.worker.SmsSyncer
 import com.orcuspay.dakpion.worker.SyncScheduler
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
-import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -32,23 +28,12 @@ import kotlinx.coroutines.withTimeoutOrNull
  */
 class SmsReceiver : BroadcastReceiver() {
 
-    // BroadcastReceiver.onReceive is abstract, so @AndroidEntryPoint injection
-    // (which needs a super call) can't be used; resolve the syncer manually.
-    @EntryPoint
-    @InstallIn(SingletonComponent::class)
-    interface SmsReceiverEntryPoint {
-        fun smsSyncer(): SmsSyncer
-    }
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != SMS_RECEIVED) return
-        Log.d("pluton", "Receiver Start")
-
-        val smsSyncer = EntryPointAccessors
-            .fromApplication(context.applicationContext, SmsReceiverEntryPoint::class.java)
-            .smsSyncer()
+        Diag.init(context)
+        Diag.log("receiver: SMS_RECEIVED")
 
         // If the OEM killed the keep-alive service, try to bring it back now
         // (works on Android 8–11; 12+ may refuse from here — harmless).
@@ -59,6 +44,7 @@ class SmsReceiver : BroadcastReceiver() {
         val messages = try {
             Telephony.Sms.Intents.getMessagesFromIntent(intent)
         } catch (e: Exception) {
+            Diag.log("receiver: pdu parse failed ${e.message}")
             null
         }
         val first = messages?.firstOrNull()
@@ -70,6 +56,15 @@ class SmsReceiver : BroadcastReceiver() {
             "subscription",
             intent.getIntExtra("android.telephony.extra.SUBSCRIPTION_INDEX", -1),
         )
+        Diag.log("receiver: from=${sender ?: "?"} len=${body?.length ?: 0} sub=$subscriptionId")
+
+        val smsSyncer = try {
+            DakpionApplication.syncer(context)
+        } catch (e: Exception) {
+            Diag.log("receiver: no syncer (${e.message}) — scheduling job")
+            SyncScheduler.enqueueImmediate(context.applicationContext, ExistingWorkPolicy.APPEND_OR_REPLACE)
+            return
+        }
 
         val pendingResult = goAsync()
         scope.launch {
@@ -85,8 +80,9 @@ class SmsReceiver : BroadcastReceiver() {
                         smsSyncer.sync(fast = true)
                     }
                 }
+                Diag.log("receiver: sync outcome=${outcome ?: "TIMEOUT"}")
             } catch (e: Exception) {
-                Log.d("pluton", "In-receiver sync failed: ${e.message}")
+                Diag.log("receiver: sync threw ${e.javaClass.simpleName}: ${e.message}")
             } finally {
                 if (outcome != SmsSyncer.Outcome.SUCCESS) {
                     // Upload failed, timed out, or threw: hand off to the

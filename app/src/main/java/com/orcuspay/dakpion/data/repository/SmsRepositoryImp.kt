@@ -19,6 +19,7 @@ import com.orcuspay.dakpion.domain.repository.FilterRepository
 import com.orcuspay.dakpion.domain.repository.SenderRulesRepository
 import com.orcuspay.dakpion.domain.repository.SmsRepository
 import com.orcuspay.dakpion.util.DakpionPreference
+import com.orcuspay.dakpion.util.Diag
 import com.orcuspay.dakpion.util.SimInfoProvider
 import java.util.*
 import javax.inject.Inject
@@ -195,10 +196,16 @@ class SmsRepositoryImp @Inject constructor(
             status = SMSStatus.PROCESSING,
         )
 
-        if (!rules.isSenderAllowed(sms.sender) || !credential.enabled) return
+        if (!rules.isSenderAllowed(sms.sender) || !credential.enabled) {
+            Diag.log("gate: skip from=${sms.sender} allowed=${rules.isSenderAllowed(sms.sender)} enabled=${credential.enabled}")
+            return
+        }
 
         // Drop OTP/PIN-style bodies before storing/forwarding.
-        if (rules.isNegativeBody(body)) return
+        if (rules.isNegativeBody(body)) {
+            Diag.log("gate: negative-keyword drop from=${sms.sender}")
+            return
+        }
 
         // If HQ configured positive keywords, require one (no-op when unset).
         if (!rules.passesPositiveKeywords(body)) return
@@ -233,9 +240,9 @@ class SmsRepositoryImp @Inject constructor(
         }
 
         val smsEntity = sms.toSMSEntity()
-        Log.d("kraken", "Created $smsEntity")
         try {
             dao.createSMS(smsEntity)
+            Diag.log("gate: stored id=${sms.smsId} from=${sms.sender} status=${sms.status}")
         } catch (e: Exception) {
             // Likely duplicate, ignore
         }

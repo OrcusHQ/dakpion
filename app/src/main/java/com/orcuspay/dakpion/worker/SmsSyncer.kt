@@ -8,6 +8,7 @@ import com.orcuspay.dakpion.domain.model.SMSStatus
 import com.orcuspay.dakpion.domain.repository.DakpionRepository
 import com.orcuspay.dakpion.domain.repository.SmsRepository
 import com.orcuspay.dakpion.util.DakpionPreference
+import com.orcuspay.dakpion.util.Diag
 import com.orcuspay.dakpion.util.NotificationHelper
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -51,8 +52,9 @@ class SmsSyncer @Inject constructor(
                 timestampMs = timestampMs,
                 subscriptionId = subscriptionId,
             )
+            Diag.log("ingest: stored candidate from=$sender")
         } catch (e: Exception) {
-            Log.d("kraken", "Direct ingest failed: ${e.message}")
+            Diag.log("ingest: threw ${e.javaClass.simpleName}: ${e.message}")
         }
         return sync(fast = true)
     }
@@ -65,6 +67,7 @@ class SmsSyncer @Inject constructor(
     suspend fun sync(fast: Boolean = false): Outcome = mutex.withLock {
         try {
             val syncStartedAt = Date()
+            Diag.log("sync: start fast=$fast")
             if (!fast) {
                 dakpionRepository.syncCredentials()
             }
@@ -114,6 +117,7 @@ class SmsSyncer @Inject constructor(
 
                         when (val result = dakpionRepository.send(credential, sms)) {
                             is ApiResult.Error -> {
+                                Diag.log("sync: send FAILED sms=${sms.smsId} from=${sms.sender}: ${result.message}")
                                 if (result.exception !is InvalidCredentialException) {
                                     hasError = true
                                     dakpionPreference.incrementSendAttempts(sms.smsId)
@@ -126,6 +130,7 @@ class SmsSyncer @Inject constructor(
                                 }
                             }
                             is ApiResult.Success -> {
+                                Diag.log("sync: send OK sms=${sms.smsId} from=${sms.sender} stored=${result.data?.stored}")
                                 successCount++
                                 lastSuccessfulSms = sms
                                 dakpionPreference.clearSendAttempts(sms.smsId)
@@ -149,9 +154,10 @@ class SmsSyncer @Inject constructor(
                 )
             }
 
+            Diag.log("sync: done sent=$successCount error=$hasError")
             if (hasError) Outcome.RETRY else Outcome.SUCCESS
         } catch (e: Exception) {
-            Log.d("kraken", "SmsSyncer failed: ${e.message}")
+            Diag.log("sync: threw ${e.javaClass.simpleName}: ${e.message}")
             Outcome.RETRY
         }
     }

@@ -36,6 +36,7 @@ import com.orcuspay.dakpion.presentation.composables.TopBar
 import com.orcuspay.dakpion.presentation.composables.XButton
 import com.orcuspay.dakpion.presentation.theme.*
 import com.orcuspay.dakpion.util.BackgroundProtection
+import com.orcuspay.dakpion.util.Diag
 import com.orcuspay.dakpion.util.SimInfoProvider
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -113,6 +114,8 @@ fun DeviceStatusScreen(
                     lastSyncTime = state.lastSyncTime,
                 )
             }
+
+            item { DiagnosticsCard(events = Diag.events(context).takeLast(14).reversed()) }
 
             item {
                 XButton(
@@ -366,6 +369,46 @@ private fun DeviceInfoCard(
             InfoRow("Network", deviceInfo.network ?: "Unknown")
             InfoRow("App version", deviceInfo.appVersion)
             InfoRow("Last sync", lastSyncTime?.formatStatusDate() ?: "Not yet")
+        }
+    }
+}
+
+@Composable
+private fun DiagnosticsCard(events: List<String>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        elevation = 0.dp,
+        backgroundColor = MaterialTheme.colors.surface,
+        border = BorderStroke(1.dp, BorderColor),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Recent activity",
+                fontFamily = interFontFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = TextPrimary,
+            )
+            Gap(height = 8.dp)
+            if (events.isEmpty()) {
+                Text(
+                    text = "Nothing recorded yet.",
+                    fontFamily = interFontFamily,
+                    fontSize = 12.sp,
+                    color = TextSecondary,
+                )
+            }
+            events.forEach { e ->
+                Text(
+                    text = e,
+                    fontFamily = interFontFamily,
+                    fontSize = 11.sp,
+                    color = TextSecondary,
+                    lineHeight = 15.sp,
+                    modifier = Modifier.padding(vertical = 1.dp),
+                )
+            }
         }
     }
 }

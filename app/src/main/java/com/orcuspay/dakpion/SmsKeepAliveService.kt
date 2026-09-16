@@ -13,21 +13,19 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.provider.Telephony
-import android.util.Log
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import com.orcuspay.dakpion.util.BackgroundProtection
+import com.orcuspay.dakpion.util.Diag
 import com.orcuspay.dakpion.util.NotificationHelper
-import com.orcuspay.dakpion.worker.SmsSyncer
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
-import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.FileDescriptor
+import java.io.PrintWriter
 
 /**
  * Keeps the Dakpion process alive in the background with a persistent, silent
@@ -45,75 +43,30 @@ import kotlinx.coroutines.launch
  */
 class SmsKeepAliveService : Service() {
 
-    @EntryPoint
-    @InstallIn(SingletonComponent::class)
-    interface KeepAliveEntryPoint {
-        fun smsSyncer(): SmsSyncer
-    }
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private var inboxObserver: ContentObserver? = null
+    private val observers = mutableListOf<ContentObserver>()
     private var pendingSync: Job? = null
 
     override fun onCreate() {
         super.onCreate()
+        Diag.init(this)
+        Diag.log("service: onCreate")
         promote()
         watchInbox()
     }
 
-    /**
-     * Second, independent capture path: watch the SMS database itself.
-     *
-     * SMS_RECEIVED is an *ordered* broadcast — any app registered above us
-     * (Truecaller, some OEM spam filters) can abort it and [SmsReceiver] never
-     * fires. But the default messaging app still writes the SMS to the inbox,
-     * and that write is observable. So while this service is alive, every
-     * inbox change triggers a fast sync (debounced), whatever happened to the
-     * broadcast.
-     */
-    private fun watchInbox() {
-        if (inboxObserver != null) return
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) !=
-            PackageManager.PERMISSION_GRANTED
-        ) return
-
-        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
-            override fun onChange(selfChange: Boolean, uri: Uri?) {
-                // Several notifications arrive per SMS (insert, thread update,
-                // read flag…). Coalesce them into one sync shortly after the
-                // last one.
-                pendingSync?.cancel()
-                pendingSync = scope.launch {
-                    delay(INBOX_DEBOUNCE_MS)
-                    try {
-                        EntryPointAccessors
-                            .fromApplication(applicationContext, KeepAliveEntryPoint::class.java)
-                            .smsSyncer()
-                            .sync(fast = true)
-                    } catch (e: Exception) {
-                        Log.d("kraken", "Inbox-observer sync failed: ${e.message}")
-                    }
-                }
-            }
-        }
-        try {
-            contentResolver.registerContentObserver(Telephony.Sms.CONTENT_URI, true, observer)
-            inboxObserver = observer
-        } catch (e: Exception) {
-            Log.d("kraken", "Could not observe inbox: ${e.message}")
-        }
-    }
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         promote()
+        watchInbox()
         // If the OEM kills us anyway, ask Android to bring us back.
         return START_STICKY
     }
 
     override fun onDestroy() {
+        Diag.log("service: onDestroy")
         isRunning = false
-        inboxObserver?.let { contentResolver.unregisterContentObserver(it) }
-        inboxObserver = null
+        observers.forEach { contentResolver.unregisterContentObserver(it) }
+        observers.clear()
         pendingSync?.cancel()
         super.onDestroy()
     }
@@ -122,10 +75,25 @@ class SmsKeepAliveService : Service() {
     // started service alive through this; some OEMs don't. Re-assert.
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
+        Diag.log("service: onTaskRemoved")
         start(applicationContext)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    /**
+     * `adb shell dumpsys activity service com.dakpion.app/.SmsKeepAliveService`
+     * — the remote-debugging view when the ROM hides app logs.
+     */
+    override fun dump(fd: FileDescriptor?, writer: PrintWriter?, args: Array<out String>?) {
+        val w = writer ?: return
+        w.println("Dakpion keep-alive")
+        w.println("  running=$isRunning observers=${observers.size}")
+        val status = BackgroundProtection.status(this)
+        w.println("  oem=${status.oem} batteryOptimized=${status.batteryOptimized} bgRestricted=${status.backgroundRestricted}")
+        w.println("Recent events (oldest first):")
+        Diag.events(this).forEach { w.println("  $it") }
+    }
 
     private fun promote() {
         try {
@@ -146,10 +114,59 @@ class SmsKeepAliveService : Service() {
             // Android 12+ refuses foreground starts from some background
             // contexts; nothing to do but stand down. The receiver path and the
             // periodic sync still work without us.
-            Log.d("kraken", "Keep-alive service could not start: ${e.message}")
+            Diag.log("service: startForeground refused ${e.javaClass.simpleName}: ${e.message}")
             isRunning = false
             stopSelf()
         }
+    }
+
+    /**
+     * Second, independent capture path: watch the SMS database itself.
+     *
+     * SMS_RECEIVED is an *ordered* broadcast — any app registered above us
+     * (Truecaller, some OEM spam filters) can abort it and [SmsReceiver] never
+     * fires. But the default messaging app still writes the SMS to the inbox,
+     * and that write is observable. So while this service is alive, every
+     * inbox change triggers a fast sync (debounced), whatever happened to the
+     * broadcast.
+     */
+    private fun watchInbox() {
+        if (observers.isNotEmpty()) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            Diag.log("service: READ_SMS not granted — inbox observer off")
+            return
+        }
+
+        // Some providers notify content://sms, others only content://mms-sms.
+        val uris = listOf(Telephony.Sms.CONTENT_URI, Telephony.MmsSms.CONTENT_URI)
+        uris.forEach { uri ->
+            val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+                override fun onChange(selfChange: Boolean, changed: Uri?) {
+                    Diag.log("observer: change ${changed ?: uri}")
+                    // Several notifications arrive per SMS (insert, thread
+                    // update, read flag…). Coalesce them into one sync.
+                    pendingSync?.cancel()
+                    pendingSync = scope.launch {
+                        delay(INBOX_DEBOUNCE_MS)
+                        try {
+                            val outcome = DakpionApplication.syncer(applicationContext).sync(fast = true)
+                            Diag.log("observer: sync outcome=$outcome")
+                        } catch (e: Exception) {
+                            Diag.log("observer: sync threw ${e.javaClass.simpleName}: ${e.message}")
+                        }
+                    }
+                }
+            }
+            try {
+                contentResolver.registerContentObserver(uri, true, observer)
+                observers.add(observer)
+            } catch (e: Exception) {
+                Diag.log("service: cannot observe $uri: ${e.message}")
+            }
+        }
+        Diag.log("service: inbox observers registered=${observers.size}")
     }
 
     companion object {
@@ -169,7 +186,7 @@ class SmsKeepAliveService : Service() {
             } catch (e: Exception) {
                 // ForegroundServiceStartNotAllowedException and friends: the OS
                 // didn't let a background caller start us. Not fatal.
-                Log.d("kraken", "Keep-alive start refused: ${e.message}")
+                Diag.log("service: start refused ${e.javaClass.simpleName}: ${e.message}")
             }
         }
     }
