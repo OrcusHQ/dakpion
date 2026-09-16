@@ -95,6 +95,10 @@ class SenderRulesRepositoryImp @Inject constructor(
                 negativeKeywords = json.optStringList("negativeKeywords"),
                 positiveKeywords = json.optStringList("positiveKeywords"),
             )
+                // Fail-open: a successful fetch with an EMPTY whitelist (e.g. every
+                // method momentarily disabled on the dashboard) must not silently
+                // block every sender. Treat it as "no rules" so DEFAULT applies.
+                .takeIf { it.allowedSenders.isNotEmpty() }
         } catch (e: Exception) {
             null
         }

@@ -36,14 +36,17 @@ class SmsRepositoryImp @Inject constructor(
     private val dao = db.dao
     private val context: Context = application.applicationContext
 
-    override suspend fun loadSMSAfter(after: Date) {
+    override suspend fun loadSMSAfter(after: Date, refreshRules: Boolean) {
         val credentials = dao.getCredentials().map { it.toCredential() }
         val filters = filterRepository.getEnabledFilters()
 
         // Refresh server-driven sender rules (whitelist + blocked/negative) for
         // each business, then resolve them per credential. Network failures fall
-        // back to the last-known rules, or SenderRules.DEFAULT.
-        senderRulesRepository.refresh(credentials)
+        // back to the last-known rules, or SenderRules.DEFAULT. Skipped on the
+        // in-receiver fast path so the upload fits the broadcast time budget.
+        if (refreshRules) {
+            senderRulesRepository.refresh(credentials)
+        }
         val rulesByCredential = credentials.associate { credential ->
             credential.id to senderRulesRepository.getRules(credential.accessKey)
         }

@@ -2,10 +2,9 @@ package com.orcuspay.dakpion
 
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
-import androidx.work.*
-import com.orcuspay.dakpion.worker.DakpionKamla
+import androidx.work.Configuration
+import com.orcuspay.dakpion.worker.SyncScheduler
 import dagger.hilt.android.HiltAndroidApp
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -21,31 +20,7 @@ class DakpionApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-
-        val workManager = WorkManager.getInstance(this)
-
-        val constraints: Constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .build()
-
-        val workRequest =
-            PeriodicWorkRequestBuilder<DakpionKamla>(
-                1, TimeUnit.HOURS
-            )
-                .setConstraints(constraints)
-                .setBackoffCriteria(
-                    BackoffPolicy.LINEAR,
-                    2L,
-                    TimeUnit.MINUTES
-                )
-                .addTag(DakpionKamla.TAG)
-                .build()
-
-        workManager
-            .enqueueUniquePeriodicWork(
-                DakpionKamla.TAG,
-                ExistingPeriodicWorkPolicy.REPLACE,
-                workRequest
-            )
+        // Periodic catch-up sync (15 min). The immediate path is SmsReceiver.
+        SyncScheduler.ensurePeriodic(this)
     }
 }

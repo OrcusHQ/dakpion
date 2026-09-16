@@ -1,7 +1,10 @@
 package com.orcuspay.dakpion
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.orcuspay.dakpion.presentation.screens.NavGraphs
 import com.orcuspay.dakpion.presentation.theme.DakpionTheme
+import com.orcuspay.dakpion.worker.SyncScheduler
 import com.ramcosta.composedestinations.DestinationsNavHost
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -25,6 +29,20 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var text: String
+
+    override fun onStart() {
+        super.onStart()
+        // Opening the app always forces a sync, so a merchant checking the
+        // app never has to wait for the periodic job or press "Sync now".
+        SyncScheduler.enqueueImmediate(applicationContext)
+        // And (re)start the keep-alive service once SMS access is granted, so
+        // the receiver keeps firing after the merchant leaves the app.
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            SmsKeepAliveService.start(this)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

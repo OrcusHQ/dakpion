@@ -1,29 +1,26 @@
 package com.orcuspay.dakpion.worker
 
 import android.content.Context
-import android.util.Log
+import android.content.pm.ServiceInfo
+import android.os.Build
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
-import com.orcuspay.dakpion.data.exception.InvalidCredentialException
-import com.orcuspay.dakpion.data.remote.ApiResult
-import com.orcuspay.dakpion.domain.model.SMS
-import com.orcuspay.dakpion.domain.model.SMSStatus
-import com.orcuspay.dakpion.domain.repository.DakpionRepository
-import com.orcuspay.dakpion.domain.repository.SmsRepository
-import com.orcuspay.dakpion.util.DakpionPreference
 import com.orcuspay.dakpion.util.NotificationHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import java.util.*
 
+/**
+ * WorkManager entry point for the SMS sync. The actual pipeline lives in
+ * [SmsSyncer]; this worker just runs it and maps the outcome to retry/success.
+ * Scheduled by [SyncScheduler] (expedited retry / periodic catch-up).
+ */
 @HiltWorker
 class DakpionKamla @AssistedInject constructor(
     @Assisted val context: Context,
     @Assisted val workerParams: WorkerParameters,
-    private val dakpionRepository: DakpionRepository,
-    private val smsRepository: SmsRepository,
-    private val dakpionPreference: DakpionPreference,
+    private val smsSyncer: SmsSyncer,
     private val notificationHelper: NotificationHelper,
 ) : CoroutineWorker(
     appContext = context,
@@ -32,115 +29,27 @@ class DakpionKamla @AssistedInject constructor(
 
     companion object {
         const val TAG = "dakpionkamla"
-        private const val FIRST_SYNC_LOOKBACK_MS = 24L * 60L * 60L * 1000L
-        private const val AUTO_SYNC_LOOKBACK_MS = 5L * 60L * 1000L
-        // Stop retrying a single SMS after this many failed uploads, so a
-        // permanently-failing message never hammers the API forever.
-        private const val MAX_SEND_ATTEMPTS = 25
     }
 
     override suspend fun doWork(): Result {
-        try {
-            val syncStartedAt = Date()
-            dakpionRepository.syncCredentials()
+        return when (smsSyncer.sync()) {
+            SmsSyncer.Outcome.SUCCESS -> Result.success()
+            SmsSyncer.Outcome.RETRY -> Result.retry()
+        }
+    }
 
-            val lastSyncTime = dakpionPreference.getLastSyncTime()
-            val scanAfter = Date(
-                if (lastSyncTime == null) {
-                    syncStartedAt.time - FIRST_SYNC_LOOKBACK_MS
-                } else {
-                    lastSyncTime.time - AUTO_SYNC_LOOKBACK_MS
-                }.coerceAtLeast(0L)
+    // Required for expedited work on API 26–30, where WorkManager runs it as a
+    // short-lived foreground service. Silent, low-importance notification.
+    override suspend fun getForegroundInfo(): ForegroundInfo {
+        val notification = notificationHelper.buildSyncNotification()
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ForegroundInfo(
+                NotificationHelper.SYNC_NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
             )
-
-            smsRepository.loadSMSAfter(after = scanAfter)
-            dakpionPreference.setLastSyncTime(syncStartedAt)
-
-            val credentialWithSMSList = dakpionRepository.getCredentialWithSMS()
-
-            var hasError = false
-            var successCount = 0
-            var lastSuccessfulSms: SMS? = null
-            
-            credentialWithSMSList.forEach { cs ->
-                val credential = cs.credential
-                val smsList = cs.smsList
-
-                if (credential.enabled) {
-                    smsList
-                        .filter {
-                            // Only retry messages that never got a definitive
-                            // server verdict: PROCESSING (never acked) and ERROR
-                            // (transient network/5xx). NOT_STORED is a terminal
-                            // "this is not a payment" decision — re-sending it
-                            // every cycle floods the API forever (a non-payment
-                            // is never stored, so its body never dedupes to a
-                            // 409 to make it stop). SUSPICIOUS still needs its
-                            // first upload; it self-terminates to DUPLICATE on
-                            // the next cycle once the server has stored it.
-                            (
-                                it.status == SMSStatus.PROCESSING ||
-                                    it.status == SMSStatus.ERROR ||
-                                    it.status == SMSStatus.SUSPICIOUS
-                                )
-                        }
-                        .forEach { sms ->
-                            // Retry cap: give up on a single SMS after too many
-                            // failed uploads so it stops flooding the API.
-                            if (dakpionPreference.getSendAttempts(sms.smsId) >= MAX_SEND_ATTEMPTS) {
-                                return@forEach
-                            }
-
-                            val result = dakpionRepository.send(
-                                credential = credential,
-                                sms = sms
-                            )
-                            when (result) {
-                                is ApiResult.Error -> {
-                                    if (result.exception !is InvalidCredentialException) {
-                                        hasError = true
-                                        dakpionPreference.incrementSendAttempts(sms.smsId)
-                                    } else {
-                                        notificationHelper.showNotification(
-                                            notificationId = credential.id,
-                                            title = "Invalid credential",
-                                            content = "${credential.businessName} has invalid credentials. We have disabled it."
-                                        )
-                                    }
-                                }
-                                is ApiResult.Success -> {
-                                    successCount++
-                                    lastSuccessfulSms = sms
-                                    dakpionPreference.clearSendAttempts(sms.smsId)
-                                }
-                            }
-                        }
-                }
-            }
-
-            if (successCount == 1 && lastSuccessfulSms != null) {
-                notificationHelper.showNotification(
-                    notificationId = lastSuccessfulSms!!.smsId,
-                    title = "Payment Detected",
-                    content = "New payment from ${lastSuccessfulSms!!.sender}: ${lastSuccessfulSms!!.body.take(50)}..."
-                )
-            } else if (successCount > 1) {
-                notificationHelper.showNotification(
-                    notificationId = 999,
-                    title = "Multiple Payments Detected",
-                    content = "Successfully processed $successCount new transactions."
-                )
-            }
-
-            if (hasError) {
-                return Result.retry()
-            }
-
-            return Result.success()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Log.d("kraken", "Exception in DakpionKamla")
-            return Result.retry()
+        } else {
+            ForegroundInfo(NotificationHelper.SYNC_NOTIFICATION_ID, notification)
         }
     }
 }

@@ -9,6 +9,32 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Needed to read which SIM (subscription/slot) an SMS arrived on, for SIM filtering. -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <!-- Expedited WorkManager sync runs as a short foreground service on Android 8–11. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <!-- Keep-alive service: keeps the process alive so the SMS receiver fires
+         on phones whose OEM battery manager force-stops background apps. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Direct "allow Dakpion to run unrestricted" prompt from the Device tab.
+         Core function (payment SMS forwarding) breaks without it. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+
+    <!-- OEM "Autostart" managers we deep-link to from the Device tab (package
+         visibility, Android 11+). Absent packages are simply skipped. -->
+    <queries>
+        <package android:name="com.transsion.phonemaster" />
+        <package android:name="com.transsion.phonemanager" />
+        <package android:name="com.miui.securitycenter" />
+        <package android:name="com.coloros.safecenter" />
+        <package android:name="com.oppo.safe" />
+        <package android:name="com.oneplus.security" />
+        <package android:name="com.vivo.permissionmanager" />
+        <package android:name="com.iqoo.secure" />
+        <package android:name="com.huawei.systemmanager" />
+        <package android:name="com.samsung.android.lool" />
+        <package android:name="com.samsung.android.sm_cn" />
+    </queries>
 
 
     <application
@@ -55,6 +81,34 @@
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
+
+        <!-- Restart protection after reboot / app update. -->
+        <receiver
+            android:name=".SystemEventReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Persistent keep-alive service (see SmsKeepAliveService). -->
+        <service
+            android:name=".SmsKeepAliveService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the SMS receiver alive so incoming mobile-banking payment SMS (bKash, Nagad, Rocket) are forwarded to the merchant's OrcusPay dashboard in real time for payment verification." />
+        </service>
+
+        <!-- Declare the type for WorkManager's foreground service (used only
+             for expedited work on Android 8–11); required on Android 14+. -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
     </application>
 
 </manifest>

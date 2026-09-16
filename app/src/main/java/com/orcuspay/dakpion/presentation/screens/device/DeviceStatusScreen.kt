@@ -1,12 +1,6 @@
 package com.orcuspay.dakpion.presentation.screens.device
 
 import android.Manifest
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
-import android.os.PowerManager
-import android.provider.Settings
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,13 +9,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,6 +35,7 @@ import com.orcuspay.dakpion.presentation.composables.Gap
 import com.orcuspay.dakpion.presentation.composables.TopBar
 import com.orcuspay.dakpion.presentation.composables.XButton
 import com.orcuspay.dakpion.presentation.theme.*
+import com.orcuspay.dakpion.util.BackgroundProtection
 import com.orcuspay.dakpion.util.SimInfoProvider
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -46,7 +48,20 @@ fun DeviceStatusScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
-    val batteryOptimized = isBatteryOptimized(context)
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Re-read battery/background status whenever the merchant comes back from
+    // a settings screen, so the card reflects what they just changed.
+    var protection by remember { mutableStateOf(BackgroundProtection.status(context)) }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                protection = BackgroundProtection.status(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     val phonePermission = rememberPermissionState(Manifest.permission.READ_PHONE_STATE)
 
@@ -75,12 +90,12 @@ fun DeviceStatusScreen(
         ) {
             item { ConnectionCard(state = state) }
 
-            if (batteryOptimized) {
-                item {
-                    BatteryWarningCard {
-                        openBatterySettings(context)
-                    }
-                }
+            item {
+                BackgroundProtectionCard(
+                    status = protection,
+                    onOpenAutostart = { BackgroundProtection.openAutostartSettings(context) },
+                    onOpenBattery = { BackgroundProtection.openBatterySettings(context) },
+                )
             }
 
             item {
@@ -183,47 +198,150 @@ private fun Pill(text: String) {
 }
 
 @Composable
-private fun BatteryWarningCard(onOpenSettings: () -> Unit) {
+private fun BackgroundProtectionCard(
+    status: BackgroundProtection.Status,
+    onOpenAutostart: () -> Unit,
+    onOpenBattery: () -> Unit,
+) {
+    val attention = status.needsAttention
+    val titleColor = if (attention) WarningText else SuccessText
+    val bodyColor = if (attention) WarningText.copy(alpha = 0.82f) else SuccessText.copy(alpha = 0.82f)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         elevation = 0.dp,
-        backgroundColor = WarningBg,
-        border = BorderStroke(1.dp, WarningText.copy(alpha = 0.12f)),
+        backgroundColor = if (attention) WarningBg else SuccessBg,
+        border = BorderStroke(1.dp, titleColor.copy(alpha = 0.12f)),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Battery optimization is on",
+                text = if (attention) "Background protection needed" else "Background protection OK",
                 fontFamily = interFontFamily,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = WarningText,
+                color = titleColor,
             )
             Gap(height = 6.dp)
             Text(
-                text = "Android may delay background SMS sync. Allow Dakpion to run unrestricted for reliable payment detection.",
+                text = if (status.oem != BackgroundProtection.Oem.OTHER) {
+                    "${status.oem.label} phones stop background apps unless these are set. Without them, payments are only detected when you open Dakpion."
+                } else {
+                    "Payment SMS must sync even when Dakpion is closed. Keep these settings on."
+                },
                 fontFamily = interFontFamily,
                 fontSize = 14.sp,
-                color = WarningText.copy(alpha = 0.82f),
+                color = bodyColor,
                 lineHeight = 20.sp,
             )
             Gap(height = 12.dp)
-            OutlinedButton(
-                onClick = onOpenSettings,
-                shape = RoundedCornerShape(999.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    backgroundColor = Color.Transparent,
-                    contentColor = WarningText,
-                ),
-                border = BorderStroke(1.dp, WarningText.copy(alpha = 0.35f)),
-            ) {
-                Text(
-                    text = "Open battery settings",
-                    fontFamily = interFontFamily,
-                    fontWeight = FontWeight.SemiBold,
+
+            ProtectionRow(
+                label = "Background service",
+                value = if (status.keepAliveRunning) "Running" else "Not running — reopen the app",
+                ok = status.keepAliveRunning,
+            )
+            ProtectionRow(
+                label = "Battery",
+                value = if (status.batteryOptimized) "Optimized — tap Battery settings" else "Unrestricted",
+                ok = !status.batteryOptimized,
+            )
+            ProtectionRow(
+                label = "Background activity",
+                value = if (status.backgroundRestricted) "Restricted — allow it" else "Allowed",
+                ok = !status.backgroundRestricted,
+            )
+            if (status.hasAutostartManager) {
+                ProtectionRow(
+                    label = "Autostart",
+                    value = "Must be ON — check manually",
+                    ok = false,
                 )
             }
+
+            Gap(height = 10.dp)
+            BackgroundProtection.steps(status.oem).forEachIndexed { index, step ->
+                Row(modifier = Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.Top) {
+                    Text(
+                        text = "${index + 1}.",
+                        modifier = Modifier.width(20.dp),
+                        fontFamily = interFontFamily,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = titleColor,
+                    )
+                    Text(
+                        text = step,
+                        fontFamily = interFontFamily,
+                        fontSize = 13.sp,
+                        color = bodyColor,
+                        lineHeight = 19.sp,
+                    )
+                }
+            }
+
+            Gap(height = 12.dp)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (status.hasAutostartManager) {
+                    ProtectionButton(text = "Open Autostart", color = titleColor, onClick = onOpenAutostart)
+                }
+                ProtectionButton(text = "Battery settings", color = titleColor, onClick = onOpenBattery)
+            }
         }
+    }
+}
+
+@Composable
+private fun ProtectionRow(label: String, value: String, ok: Boolean) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.weight(0.4f),
+            fontFamily = interFontFamily,
+            fontSize = 13.sp,
+            color = TextSecondary,
+        )
+        Row(modifier = Modifier.weight(0.6f), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(if (ok) PrimaryColor else WarningText, RoundedCornerShape(4.dp))
+            )
+            Gap(width = 8.dp)
+            Text(
+                text = value,
+                fontFamily = interFontFamily,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                color = TextPrimary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProtectionButton(text: String, color: Color, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        shape = RoundedCornerShape(999.dp),
+        colors = ButtonDefaults.outlinedButtonColors(
+            backgroundColor = Color.Transparent,
+            contentColor = color,
+        ),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.35f)),
+    ) {
+        Text(
+            text = text,
+            fontFamily = interFontFamily,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+        )
     }
 }
 
@@ -418,22 +536,4 @@ private fun StatusMessage(
 
 private fun Date.formatStatusDate(): String {
     return SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(this)
-}
-
-private fun isBatteryOptimized(context: Context): Boolean {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return false
-    val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-        ?: return false
-    return !powerManager.isIgnoringBatteryOptimizations(context.packageName)
-}
-
-private fun openBatterySettings(context: Context) {
-    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = Uri.parse("package:${context.packageName}")
-        }
-    } else {
-        Intent(Settings.ACTION_SETTINGS)
-    }
-    context.startActivity(intent)
 }
