@@ -80,9 +80,11 @@ class SmsSyncer @Inject constructor(
                             it.status == SMSStatus.SUSPICIOUS
                     }
                     .forEach { sms ->
-                        // Retry cap: give up on a single SMS after too many
-                        // failed uploads so it stops flooding the API.
-                        if (dakpionPreference.getSendAttempts(sms.smsId) >= MAX_SEND_ATTEMPTS) {
+                        // Retry cap by AGE, not attempt count: a payment SMS
+                        // must keep retrying through a flaky network for as
+                        // long as it could still matter. (An attempt-count cap
+                        // silently abandoned fresh SMS on phones with bad DNS.)
+                        if (syncStartedAt.time - sms.date.time > MAX_RETRY_AGE_MS) {
                             return@forEach
                         }
 
@@ -132,8 +134,8 @@ class SmsSyncer @Inject constructor(
 
     companion object {
         private const val SCAN_LOOKBACK_MS = 24L * 60L * 60L * 1000L
-        // Stop retrying a single SMS after this many failed uploads, so a
-        // permanently-failing message never hammers the API forever.
-        private const val MAX_SEND_ATTEMPTS = 25
+        // Stop retrying an SMS once it is this old, so a permanently-failing
+        // message never hammers the API forever — but never before then.
+        private const val MAX_RETRY_AGE_MS = 48L * 60L * 60L * 1000L
     }
 }

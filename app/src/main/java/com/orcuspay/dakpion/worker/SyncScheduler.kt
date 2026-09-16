@@ -41,7 +41,10 @@ object SyncScheduler {
         val request = OneTimeWorkRequestBuilder<DakpionKamla>()
             .setConstraints(connected)
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30L, TimeUnit.SECONDS)
+            // Short LINEAR retries (15 s, 30 s, 45 s, …). Exponential backoff
+            // pushed a payment SMS out by an hour after a few failures on a
+            // flaky connection — a merchant can't wait that long.
+            .setBackoffCriteria(BackoffPolicy.LINEAR, 15L, TimeUnit.SECONDS)
             .addTag(DakpionKamla.TAG)
             .build()
 
