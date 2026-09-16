@@ -281,6 +281,10 @@ class DakpionRepositoryImp @Inject constructor(
         dao.updateCredential(credential.copy(enabled = enabled).toCredentialEntity())
     }
 
+    override suspend fun pruneSmsOlderThan(beforeMs: Long): Int {
+        return dao.deleteSmsOlderThan(beforeMs)
+    }
+
     override suspend fun getCredentialWithSMS(): List<CredentialWithSMS> {
         return dao.getCredentialsWithSMS().map { it.toCredentialWithSMS() }
     }

@@ -24,6 +24,11 @@ interface DakpionDao {
     @Query("DELETE FROM smsentity WHERE credentialId = :credentialId")
     suspend fun deleteSmsByCredential(credentialId: Int)
 
+    // Retention: full SMS bodies (payer phone/card, balance, txn id) must not
+    // accumulate on the device forever. HQ keeps the canonical record.
+    @Query("DELETE FROM smsentity WHERE date < :before")
+    suspend fun deleteSmsOlderThan(before: Long): Int
+
     @Transaction
     @Query("SELECT * FROM credentialentity")
     suspend fun getCredentialsWithSMS(): List<CredentialEntitiesWithSMSEntities>

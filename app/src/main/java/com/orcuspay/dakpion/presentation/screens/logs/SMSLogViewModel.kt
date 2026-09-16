@@ -36,7 +36,9 @@ class SMSLogViewModel @Inject constructor(
 
     fun retry(credential: Credential, sms: SMS) {
         viewModelScope.launch {
-            Log.d("kraken", "Retry Sending $sms")
+            // Never log the SMS object: it carries the body (payer phone/card,
+            // balance, txn id). The id is enough to trace a retry.
+            Log.d("kraken", "Retry Sending sms=${sms.smsId}")
             dakpionRepository.send(
                 credential = credential,
                 sms = sms

@@ -17,6 +17,9 @@ interface DakpionRepository {
     suspend fun getCredentialWithSMS(): List<CredentialWithSMS>
     fun getCredentialWithSMSLiveData(): LiveData<List<CredentialWithSMS>>
 
+    /** Delete local SMS older than [beforeMs] (retention). Returns rows removed. */
+    suspend fun pruneSmsOlderThan(beforeMs: Long): Int
+
     // Analytics
     fun getTotalPaymentsCount(): LiveData<Int>
     fun getPaymentCountBySender(): LiveData<List<SenderStat>>

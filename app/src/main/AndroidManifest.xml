@@ -43,7 +43,7 @@
 
     <application
         android:name=".DakpionApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -74,11 +74,14 @@
             android:authorities="${applicationId}.androidx-startup"
             tools:node="remove" />
 
-        <!-- Read-only diagnostics trail (see DiagProvider). -->
+        <!-- Read-only diagnostics trail (see DiagProvider). Not exported: the
+             trail lists the sender of every incoming SMS, which any installed
+             app could otherwise read. Pull diag.txt from the app's external
+             files dir via adb instead. -->
         <provider
             android:name=".DiagProvider"
             android:authorities="${applicationId}.diag"
-            android:exported="true" />
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

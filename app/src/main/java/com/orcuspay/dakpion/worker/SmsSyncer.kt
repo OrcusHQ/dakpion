@@ -97,6 +97,15 @@ class SmsSyncer @Inject constructor(
                     (application as? com.orcuspay.dakpion.DakpionApplication)?.registerPushToken()
                 }
                 dakpionRepository.syncCredentials()
+
+                // Retention: drop local SMS older than 30 days. Well outside
+                // both the 24h rescan window and the 48h retry cap, so nothing
+                // still in flight is touched; HQ keeps the canonical record.
+                val retentionMs = 30L * 24 * 60 * 60 * 1000
+                val pruned = dakpionRepository.pruneSmsOlderThan(
+                    syncStartedAt.time - retentionMs,
+                )
+                if (pruned > 0) Diag.log("sync: pruned $pruned old sms")
             }
 
             // Full syncs rescan the last 24h so an SMS skipped earlier (rules
