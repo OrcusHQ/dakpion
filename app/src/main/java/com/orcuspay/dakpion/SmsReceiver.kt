@@ -3,6 +3,7 @@ package com.orcuspay.dakpion
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.provider.Telephony
 import android.util.Log
 import androidx.work.ExistingWorkPolicy
 import com.orcuspay.dakpion.worker.SmsSyncer
@@ -53,16 +54,36 @@ class SmsReceiver : BroadcastReceiver() {
         // (works on Android 8–11; 12+ may refuse from here — harmless).
         SmsKeepAliveService.start(context)
 
+        // Take the SMS straight from the broadcast (multipart PDUs concatenated)
+        // so we don't depend on the messaging app writing the inbox in time.
+        val messages = try {
+            Telephony.Sms.Intents.getMessagesFromIntent(intent)
+        } catch (e: Exception) {
+            null
+        }
+        val first = messages?.firstOrNull()
+        val sender = first?.displayOriginatingAddress ?: first?.originatingAddress
+        val body = messages?.joinToString("") { it.displayMessageBody ?: it.messageBody ?: "" }
+        val timestampMs = first?.timestampMillis ?: System.currentTimeMillis()
+        // Which SIM it arrived on (for the merchant's SIM filter); -1 if unknown.
+        val subscriptionId = intent.getIntExtra(
+            "subscription",
+            intent.getIntExtra("android.telephony.extra.SUBSCRIPTION_INDEX", -1),
+        )
+
         val pendingResult = goAsync()
         scope.launch {
             var outcome: SmsSyncer.Outcome? = null
             try {
-                // SMS_RECEIVED is broadcast slightly before the messaging app
-                // writes the SMS to the inbox, and the sync reads the inbox.
-                // A short pause avoids scanning a moment too early.
-                delay(INBOX_SETTLE_MS)
                 outcome = withTimeoutOrNull(RECEIVER_BUDGET_MS) {
-                    smsSyncer.sync(fast = true)
+                    if (!sender.isNullOrBlank() && !body.isNullOrBlank()) {
+                        smsSyncer.ingestAndSync(sender, body, timestampMs, subscriptionId)
+                    } else {
+                        // Couldn't read the PDUs; fall back to the inbox after
+                        // a short pause for the messaging app to write it.
+                        delay(INBOX_SETTLE_MS)
+                        smsSyncer.sync(fast = true)
+                    }
                 }
             } catch (e: Exception) {
                 Log.d("pluton", "In-receiver sync failed: ${e.message}")
@@ -87,7 +108,7 @@ class SmsReceiver : BroadcastReceiver() {
 
         private const val INBOX_SETTLE_MS = 1_200L
         // Total time we allow ourselves inside the broadcast (system limit
-        // for a foreground broadcast is ~10 s), minus the settle delay.
-        private const val RECEIVER_BUDGET_MS = 7_500L
+        // for a foreground broadcast is ~10 s).
+        private const val RECEIVER_BUDGET_MS = 8_500L
     }
 }

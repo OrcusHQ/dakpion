@@ -41,6 +41,11 @@ interface DakpionDao {
     @Query("SELECT * FROM smsentity WHERE credentialId = :credentialId AND sender = :sender AND status = 'STORED' ORDER BY date DESC LIMIT 1")
     suspend fun getLastStoredSMS(credentialId: Int, sender: String): SMSEntity?
 
+    // Same SMS can reach us twice: from the broadcast (synthetic id) and later
+    // from the inbox scan (inbox id). Dedupe on body per credential.
+    @Query("SELECT COUNT(*) FROM smsentity WHERE credentialId = :credentialId AND body = :body")
+    suspend fun countByBody(credentialId: Int, body: String): Int
+
     // Analytics Queries
     @Query("SELECT COUNT(*) FROM smsentity WHERE status = 'STORED'")
     fun getTotalPaymentsCount(): LiveData<Int>

@@ -10,5 +10,17 @@ interface SmsRepository {
      * false on time-critical paths (in-receiver upload) to use cached rules.
      */
     suspend fun loadSMSAfter(after: Date, refreshRules: Boolean = true)
+
+    /**
+     * Store an SMS delivered by the SMS_RECEIVED broadcast (before/without it
+     * being in the inbox). Runs the same sender/keyword/filter gate as the
+     * inbox scan. Cached sender rules are used (no network).
+     */
+    suspend fun ingestIncoming(
+        sender: String,
+        body: String,
+        timestampMs: Long,
+        subscriptionId: Int = -1,
+    )
     suspend fun updateSMS(sms: SMS)
 }

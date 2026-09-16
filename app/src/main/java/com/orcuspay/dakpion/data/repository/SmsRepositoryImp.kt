@@ -10,6 +10,8 @@ import com.orcuspay.dakpion.data.local.DakpionDatabase
 import com.orcuspay.dakpion.data.mapper.toCredential
 import com.orcuspay.dakpion.data.mapper.toSMS
 import com.orcuspay.dakpion.data.mapper.toSMSEntity
+import com.orcuspay.dakpion.domain.model.Credential
+import com.orcuspay.dakpion.domain.model.Filter
 import com.orcuspay.dakpion.domain.model.SMS
 import com.orcuspay.dakpion.domain.model.SMSStatus
 import com.orcuspay.dakpion.domain.model.SenderRules
@@ -109,69 +111,18 @@ class SmsRepositoryImp @Inject constructor(
             }
 
             credentials.forEach { credential ->
-                var sms = SMS(
+                // Already captured straight from the broadcast (under a
+                // synthetic id)? Don't store it again under the inbox id.
+                if (dao.countByBody(credential.id, body) > 0) return@forEach
+                gateAndStore(
+                    credential = credential,
+                    rules = rulesByCredential[credential.id] ?: SenderRules.DEFAULT,
+                    filters = filters,
                     smsId = id,
-                    credentialId = credential.id,
                     sender = creator ?: "Unknown",
                     date = Date(date),
                     body = body,
-                    status = SMSStatus.PROCESSING,
                 )
-
-                val rules = rulesByCredential[credential.id] ?: SenderRules.DEFAULT
-
-                if (rules.isSenderAllowed(sms.sender) && credential.enabled) {
-
-                    // Drop OTP/PIN-style bodies before storing/forwarding.
-                    if (rules.isNegativeBody(body)) {
-                        return@forEach
-                    }
-
-                    // If HQ configured positive keywords, require one (no-op when unset).
-                    if (!rules.passesPositiveKeywords(body)) {
-                        return@forEach
-                    }
-
-                    if (sms.sender.lowercase().contains("ibbl")) {
-                        if (!sms.body.lowercase().contains("cellfin")) {
-                            return@forEach
-                        }
-                    }
-
-                    // Extract amount and balance
-                    val amount = extractAmount(body)
-                    val currentBalance = extractBalance(body)
-                    
-                    sms = sms.copy(amount = amount, balance = currentBalance)
-
-                    // Balance Verification
-                    val lastSms = dao.getLastStoredSMS(credential.id, sms.sender)?.toSMS()
-                    if (lastSms != null && amount != null && currentBalance != null && lastSms.balance != null) {
-                        val expectedBalance = lastSms.balance + amount
-                        // allow small difference for charges if any, but usually payments are additions
-                        if (Math.abs(expectedBalance - currentBalance) > 0.01) {
-                            sms = sms.copy(status = SMSStatus.SUSPICIOUS)
-                        }
-                    }
-
-                    if (sms.status != SMSStatus.SUSPICIOUS) {
-                        if (filters.filter { filter ->
-                                filter.sender == null || filter.sender.lowercase() == sms.sender.lowercase()
-                            }.any { filter ->
-                                filter.match(sms.body)
-                            }) {
-                            sms = sms.copy(status = SMSStatus.FILTERED)
-                        }
-                    }
-
-                    val smsEntity = sms.toSMSEntity()
-                    Log.d("kraken", "Created $smsEntity")
-                    try {
-                        dao.createSMS(smsEntity)
-                    } catch (e: Exception) {
-                        // Likely duplicate, ignore
-                    }
-                }
             }
 
             cursor.moveToNext()
@@ -179,6 +130,115 @@ class SmsRepositoryImp @Inject constructor(
 
 
         cursor.close()
+    }
+
+    override suspend fun ingestIncoming(
+        sender: String,
+        body: String,
+        timestampMs: Long,
+        subscriptionId: Int,
+    ) {
+        if (body.isBlank()) return
+        val credentials = dao.getCredentials().map { it.toCredential() }
+        if (credentials.isEmpty()) return
+
+        // Honour the SIM filter the same way the inbox scan does; unknown slot
+        // means keep it.
+        val simSlotFilter = dakpionPreference.getSimSlotFilter()
+        if (simSlotFilter != SimInfoProvider.SLOT_BOTH && subscriptionId >= 0) {
+            val slot = simInfoProvider.getSubscriptionIdToSlot()[subscriptionId]
+            if (slot != null && slot != simSlotFilter) return
+        }
+
+        val filters = filterRepository.getEnabledFilters()
+
+        // Synthetic NEGATIVE id: inbox ids are positive, so it can't collide,
+        // and the (credentialId, smsId) unique index still dedupes a repeat
+        // delivery of the same message.
+        val syntheticId =
+            -((body.hashCode() * 31 + (timestampMs / 1000L).toInt()) and 0x7fffffff) - 1
+
+        credentials.forEach { credential ->
+            if (dao.countByBody(credential.id, body) > 0) return@forEach
+            gateAndStore(
+                credential = credential,
+                rules = senderRulesRepository.getRules(credential.accessKey),
+                filters = filters,
+                smsId = syntheticId,
+                sender = sender,
+                date = Date(timestampMs),
+                body = body,
+            )
+        }
+    }
+
+    /**
+     * The one gate every SMS passes through before it is stored for upload:
+     * sender whitelist, OTP/PIN drop, positive keywords, IBBL rule, amount +
+     * balance extraction, balance-continuity check, merchant filters.
+     */
+    private suspend fun gateAndStore(
+        credential: Credential,
+        rules: SenderRules,
+        filters: List<Filter>,
+        smsId: Int,
+        sender: String,
+        date: Date,
+        body: String,
+    ) {
+        var sms = SMS(
+            smsId = smsId,
+            credentialId = credential.id,
+            sender = sender,
+            date = date,
+            body = body,
+            status = SMSStatus.PROCESSING,
+        )
+
+        if (!rules.isSenderAllowed(sms.sender) || !credential.enabled) return
+
+        // Drop OTP/PIN-style bodies before storing/forwarding.
+        if (rules.isNegativeBody(body)) return
+
+        // If HQ configured positive keywords, require one (no-op when unset).
+        if (!rules.passesPositiveKeywords(body)) return
+
+        if (sms.sender.lowercase().contains("ibbl")) {
+            if (!sms.body.lowercase().contains("cellfin")) return
+        }
+
+        // Extract amount and balance
+        val amount = extractAmount(body)
+        val currentBalance = extractBalance(body)
+        sms = sms.copy(amount = amount, balance = currentBalance)
+
+        // Balance Verification
+        val lastSms = dao.getLastStoredSMS(credential.id, sms.sender)?.toSMS()
+        if (lastSms != null && amount != null && currentBalance != null && lastSms.balance != null) {
+            val expectedBalance = lastSms.balance + amount
+            // allow small difference for charges if any, but usually payments are additions
+            if (Math.abs(expectedBalance - currentBalance) > 0.01) {
+                sms = sms.copy(status = SMSStatus.SUSPICIOUS)
+            }
+        }
+
+        if (sms.status != SMSStatus.SUSPICIOUS) {
+            if (filters.filter { filter ->
+                    filter.sender == null || filter.sender.lowercase() == sms.sender.lowercase()
+                }.any { filter ->
+                    filter.match(sms.body)
+                }) {
+                sms = sms.copy(status = SMSStatus.FILTERED)
+            }
+        }
+
+        val smsEntity = sms.toSMSEntity()
+        Log.d("kraken", "Created $smsEntity")
+        try {
+            dao.createSMS(smsEntity)
+        } catch (e: Exception) {
+            // Likely duplicate, ignore
+        }
     }
 
     private fun extractAmount(body: String): Double? {

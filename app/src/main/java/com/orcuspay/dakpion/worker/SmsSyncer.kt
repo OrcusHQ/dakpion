@@ -34,6 +34,30 @@ class SmsSyncer @Inject constructor(
     private val mutex = Mutex()
 
     /**
+     * Store an SMS taken straight from the SMS_RECEIVED broadcast, then run a
+     * fast sync to upload it. Doesn't depend on the messaging app having
+     * written the inbox yet — the same approach PipraPay/OwnPay use.
+     */
+    suspend fun ingestAndSync(
+        sender: String,
+        body: String,
+        timestampMs: Long,
+        subscriptionId: Int = -1,
+    ): Outcome {
+        try {
+            smsRepository.ingestIncoming(
+                sender = sender,
+                body = body,
+                timestampMs = timestampMs,
+                subscriptionId = subscriptionId,
+            )
+        } catch (e: Exception) {
+            Log.d("kraken", "Direct ingest failed: ${e.message}")
+        }
+        return sync(fast = true)
+    }
+
+    /**
      * @param fast Skip the credential heartbeat and the sender-rules refresh so
      * the upload fits inside a broadcast receiver's time budget. Cached rules
      * (or DEFAULT) are used. The periodic sync runs the full version.
