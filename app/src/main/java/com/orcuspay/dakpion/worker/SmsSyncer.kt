@@ -72,13 +72,14 @@ class SmsSyncer @Inject constructor(
                 dakpionRepository.syncCredentials()
             }
 
-            // Always rescan the last 24h, not just since the previous sync. An
-            // SMS skipped earlier (rules momentarily excluded its sender, the
-            // sender was muted, a SIM filter was wrong) gets re-evaluated with
-            // the current rules on every run instead of falling out of a
-            // narrow window and being lost. Already-stored SMS are deduped by
-            // the (credentialId, smsId) unique index, so nothing re-sends.
-            val scanAfter = Date((syncStartedAt.time - SCAN_LOOKBACK_MS).coerceAtLeast(0L))
+            // Full syncs rescan the last 24h so an SMS skipped earlier (rules
+            // momentarily excluded its sender, a wrong SIM filter) gets
+            // re-evaluated with the current rules instead of being lost. The
+            // fast path (receiver / inbox observer / push) only needs what
+            // just arrived — a short window keeps it cheap on low-end phones.
+            // Already-stored SMS are deduped by the unique index either way.
+            val lookback = if (fast) FAST_LOOKBACK_MS else SCAN_LOOKBACK_MS
+            val scanAfter = Date((syncStartedAt.time - lookback).coerceAtLeast(0L))
 
             smsRepository.loadSMSAfter(after = scanAfter, refreshRules = !fast)
             dakpionPreference.setLastSyncTime(syncStartedAt)
@@ -164,6 +165,7 @@ class SmsSyncer @Inject constructor(
 
     companion object {
         private const val SCAN_LOOKBACK_MS = 24L * 60L * 60L * 1000L
+        private const val FAST_LOOKBACK_MS = 30L * 60L * 1000L
         // Stop retrying an SMS once it is this old, so a permanently-failing
         // message never hammers the API forever — but never before then.
         private const val MAX_RETRY_AGE_MS = 48L * 60L * 60L * 1000L

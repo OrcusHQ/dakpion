@@ -68,6 +68,8 @@ class SmsRepositoryImp @Inject constructor(
                 emptyMap()
             }
 
+        val tally = mutableMapOf<Gate, Int>()
+
         val selection = "${Telephony.Sms.Inbox.DATE} >= ?"
         val selectionArgs = arrayOf(
             "${after.time}"
@@ -112,10 +114,7 @@ class SmsRepositoryImp @Inject constructor(
             }
 
             credentials.forEach { credential ->
-                // Already captured straight from the broadcast (under a
-                // synthetic id)? Don't store it again under the inbox id.
-                if (dao.countByBody(credential.id, body) > 0) return@forEach
-                gateAndStore(
+                val result = gateAndStore(
                     credential = credential,
                     rules = rulesByCredential[credential.id] ?: SenderRules.DEFAULT,
                     filters = filters,
@@ -124,14 +123,21 @@ class SmsRepositoryImp @Inject constructor(
                     date = Date(date),
                     body = body,
                 )
+                tally[result] = (tally[result] ?: 0) + 1
             }
 
             cursor.moveToNext()
         }
 
-
         cursor.close()
+        // One summary line per scan instead of one per skipped SMS.
+        Diag.log(
+            "scan: rows=${tally.values.sum()} stored=${tally[Gate.STORED] ?: 0} " +
+                "dup=${tally[Gate.DUPLICATE] ?: 0} skipped=${tally[Gate.SKIPPED] ?: 0}"
+        )
     }
+
+    private enum class Gate { STORED, DUPLICATE, SKIPPED }
 
     override suspend fun ingestIncoming(
         sender: String,
@@ -160,8 +166,7 @@ class SmsRepositoryImp @Inject constructor(
             -((body.hashCode() * 31 + (timestampMs / 1000L).toInt()) and 0x7fffffff) - 1
 
         credentials.forEach { credential ->
-            if (dao.countByBody(credential.id, body) > 0) return@forEach
-            gateAndStore(
+            val result = gateAndStore(
                 credential = credential,
                 rules = senderRulesRepository.getRules(credential.accessKey),
                 filters = filters,
@@ -170,6 +175,7 @@ class SmsRepositoryImp @Inject constructor(
                 date = Date(timestampMs),
                 body = body,
             )
+            Diag.log("ingest: from=$sender -> $result")
         }
     }
 
@@ -186,7 +192,7 @@ class SmsRepositoryImp @Inject constructor(
         sender: String,
         date: Date,
         body: String,
-    ) {
+    ): Gate {
         var sms = SMS(
             smsId = smsId,
             credentialId = credential.id,
@@ -196,23 +202,23 @@ class SmsRepositoryImp @Inject constructor(
             status = SMSStatus.PROCESSING,
         )
 
-        if (!rules.isSenderAllowed(sms.sender) || !credential.enabled) {
-            Diag.log("gate: skip from=${sms.sender} allowed=${rules.isSenderAllowed(sms.sender)} enabled=${credential.enabled}")
-            return
-        }
+        // Cheap checks first — most inbox rows (promos, OTPs) stop here with
+        // no database work at all.
+        if (!rules.isSenderAllowed(sms.sender) || !credential.enabled) return Gate.SKIPPED
 
         // Drop OTP/PIN-style bodies before storing/forwarding.
-        if (rules.isNegativeBody(body)) {
-            Diag.log("gate: negative-keyword drop from=${sms.sender}")
-            return
-        }
+        if (rules.isNegativeBody(body)) return Gate.SKIPPED
 
         // If HQ configured positive keywords, require one (no-op when unset).
-        if (!rules.passesPositiveKeywords(body)) return
+        if (!rules.passesPositiveKeywords(body)) return Gate.SKIPPED
 
         if (sms.sender.lowercase().contains("ibbl")) {
-            if (!sms.body.lowercase().contains("cellfin")) return
+            if (!sms.body.lowercase().contains("cellfin")) return Gate.SKIPPED
         }
+
+        // Same message already stored (from the broadcast under a synthetic
+        // id, or an earlier scan)? Don't store it twice.
+        if (dao.countByBody(credential.id, body) > 0) return Gate.DUPLICATE
 
         // Extract amount and balance
         val amount = extractAmount(body)
@@ -240,11 +246,13 @@ class SmsRepositoryImp @Inject constructor(
         }
 
         val smsEntity = sms.toSMSEntity()
-        try {
+        return try {
             dao.createSMS(smsEntity)
             Diag.log("gate: stored id=${sms.smsId} from=${sms.sender} status=${sms.status}")
+            Gate.STORED
         } catch (e: Exception) {
-            // Likely duplicate, ignore
+            // Unique index hit: same inbox id already stored.
+            Gate.DUPLICATE
         }
     }
 

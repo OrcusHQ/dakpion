@@ -24,6 +24,12 @@ object Diag {
 
     private val fmt = SimpleDateFormat("dd/MM HH:mm:ss", Locale.US)
 
+    // All writes happen here, in order, off whichever thread logged (the
+    // inbox observer logs from the main thread).
+    private val writer = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
+        Thread(r, "dakpion-diag").apply { isDaemon = true }
+    }
+
     @Volatile
     private var appContext: Context? = null
 
@@ -36,12 +42,19 @@ object Diag {
         val ctx = appContext ?: return
         val entry = "${fmt.format(Date())} $message"
         try {
+            writer.execute { persist(ctx, entry) }
+        } catch (_: Exception) {
+            // Diagnostics must never break the pipeline.
+        }
+    }
+
+    private fun persist(ctx: Context, entry: String) {
+        try {
             val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             val existing = prefs.getString(KEY, "") ?: ""
             val all = if (existing.isEmpty()) listOf(entry) else existing.split(SEP) + entry
             prefs.edit().putString(KEY, all.takeLast(MAX_EVENTS).joinToString(SEP)).apply()
         } catch (_: Exception) {
-            // Diagnostics must never break the pipeline.
         }
         // Mirror to the app's external files dir so it can be pulled with adb
         // even on ROMs that hide app logs and time out service dumps.
