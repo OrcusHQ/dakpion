@@ -35,6 +35,9 @@ class MainActivity : ComponentActivity() {
         // Opening the app always forces a sync, so a merchant checking the
         // app never has to wait for the periodic job or press "Sync now".
         SyncScheduler.enqueueImmediate(applicationContext)
+        // Retry push registration if the first attempt (at process start)
+        // failed — common right after install while Play services settle.
+        (applicationContext as? DakpionApplication)?.registerPushToken()
         // And (re)start the keep-alive service once SMS access is granted, so
         // the receiver keeps firing after the merchant leaves the app.
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) ==

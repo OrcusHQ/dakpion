@@ -40,9 +40,11 @@ class DakpionApplication : Application(), Configuration.Provider {
     /**
      * Fetch the FCM token so HQ can wake this phone when a customer is
      * waiting and the OEM has frozen us. No-op when Firebase isn't configured
-     * (no google-services.json) or Play services are missing.
+     * (no google-services.json) or Play services are missing. Safe to call
+     * repeatedly (app open, sync) — the first attempt after install often
+     * fails while Play services are still settling.
      */
-    private fun registerPushToken() {
+    fun registerPushToken() {
         try {
             com.google.firebase.messaging.FirebaseMessaging.getInstance().token
                 .addOnSuccessListener { token ->

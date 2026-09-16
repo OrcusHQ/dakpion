@@ -24,6 +24,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class SmsSyncer @Inject constructor(
+    private val application: android.app.Application,
     private val dakpionRepository: DakpionRepository,
     private val smsRepository: SmsRepository,
     private val dakpionPreference: DakpionPreference,
@@ -69,6 +70,11 @@ class SmsSyncer @Inject constructor(
             val syncStartedAt = Date()
             Diag.log("sync: start fast=$fast")
             if (!fast) {
+                // Full syncs also (re)try push registration until a token is
+                // stored, so a failed first attempt heals on its own.
+                if (dakpionPreference.getPushToken().isNullOrBlank()) {
+                    (application as? com.orcuspay.dakpion.DakpionApplication)?.registerPushToken()
+                }
                 dakpionRepository.syncCredentials()
             }
 
