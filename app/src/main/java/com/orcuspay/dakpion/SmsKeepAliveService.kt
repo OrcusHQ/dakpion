@@ -43,6 +43,13 @@ class SmsKeepAliveService : Service() {
         super.onDestroy()
     }
 
+    // The app's task was removed (user cleared it). Stock Android keeps a
+    // started service alive through this; some OEMs don't. Re-assert.
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        start(applicationContext)
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun promote() {

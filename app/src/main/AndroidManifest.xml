@@ -47,9 +47,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Dakpion"
         tools:targetApi="31">
+        <!-- excludeFromRecents: on Infinix/Xiaomi/etc. swiping an app out of
+             Recent apps force-stops it, after which no SMS can wake it. If
+             Dakpion never appears in Recents, it can't be swiped away. It still
+             opens from the launcher icon and the notification. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:excludeFromRecents="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Dakpion"
             android:windowSoftInputMode="adjustResize">
@@ -102,6 +107,7 @@
         <service
             android:name=".SmsKeepAliveService"
             android:exported="false"
+            android:stopWithTask="false"
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
