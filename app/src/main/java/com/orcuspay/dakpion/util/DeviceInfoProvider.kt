@@ -29,6 +29,7 @@ class DeviceInfoProvider @Inject constructor(
             appVersion = getAppVersion(),
             batteryLevel = getBatteryLevel(),
             network = getNetworkType(),
+            pushToken = DakpionPreference(context).getPushToken(),
         )
     }
 

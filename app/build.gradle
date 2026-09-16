@@ -6,6 +6,13 @@ plugins {
     id 'com.google.devtools.ksp'
 }
 
+// Firebase (FCM wake-up) is configured by app/google-services.json. Apply the
+// plugin only when the file is present so the app still builds without it;
+// push is then simply inactive (DakpionApplication guards the token fetch).
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+}
+
 kapt {
     correctErrorTypes true
 }
@@ -145,4 +152,8 @@ dependencies {
 
     // Coil async image libraryh
     implementation("io.coil-kt:coil-compose:2.5.0")
+
+    // Firebase Cloud Messaging: wake-up push for OEM-frozen phones
+    implementation platform('com.google.firebase:firebase-bom:33.4.0')
+    implementation 'com.google.firebase:firebase-messaging'
 }

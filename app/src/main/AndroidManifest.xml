@@ -106,6 +106,15 @@
             </intent-filter>
         </receiver>
 
+        <!-- FCM wake-up (see DakpionMessagingService). -->
+        <service
+            android:name=".DakpionMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <!-- Persistent keep-alive service (see SmsKeepAliveService). -->
         <service
             android:name=".SmsKeepAliveService"

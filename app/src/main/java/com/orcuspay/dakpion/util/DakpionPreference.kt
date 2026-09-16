@@ -53,6 +53,13 @@ class DakpionPreference(
         pref.edit().putString(key, value).apply()
     }
 
+    /** FCM registration token, reported to HQ so it can wake this phone. */
+    fun getPushToken(): String? = pref.getString(PUSH_TOKEN, null)
+
+    fun setPushToken(token: String) {
+        pref.edit().putString(PUSH_TOKEN, token).apply()
+    }
+
     fun getString(key: String): String? {
         return pref.getString(key, null)
     }
@@ -86,5 +93,6 @@ class DakpionPreference(
     companion object {
         private const val SEND_ATTEMPTS_PREFIX = "SEND_ATTEMPTS_"
         private const val DISABLED_SENDERS = "DISABLED_SENDERS"
+        private const val PUSH_TOKEN = "PUSH_TOKEN"
     }
 }

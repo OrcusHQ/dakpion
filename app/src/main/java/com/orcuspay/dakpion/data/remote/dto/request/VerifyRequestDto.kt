@@ -12,4 +12,5 @@ data class VerifyRequestDto(
     val batteryLevel: Int? = null,
     val network: String? = null,
     val status: String? = null,
+    val pushToken: String? = null,
 )

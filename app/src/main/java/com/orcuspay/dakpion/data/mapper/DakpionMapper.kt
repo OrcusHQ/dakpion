@@ -20,6 +20,7 @@ fun VerifyRequest.toVerifyRequestDto(): VerifyRequestDto {
         batteryLevel = deviceInfo?.batteryLevel,
         network = deviceInfo?.network,
         status = deviceInfo?.status,
+        pushToken = deviceInfo?.pushToken,
     )
 }
 
@@ -51,6 +52,7 @@ fun SendMessageRequest.toSendMessageRequestDto(): SendMessageRequestDto {
         batteryLevel = deviceInfo?.batteryLevel,
         network = deviceInfo?.network,
         status = deviceInfo?.status,
+        pushToken = deviceInfo?.pushToken,
     )
 }
 

@@ -34,6 +34,30 @@ class DakpionApplication : Application(), Configuration.Provider {
         Diag.log("app: process start")
         // Periodic catch-up sync (15 min). The immediate path is SmsReceiver.
         SyncScheduler.ensurePeriodic(this)
+        registerPushToken()
+    }
+
+    /**
+     * Fetch the FCM token so HQ can wake this phone when a customer is
+     * waiting and the OEM has frozen us. No-op when Firebase isn't configured
+     * (no google-services.json) or Play services are missing.
+     */
+    private fun registerPushToken() {
+        try {
+            com.google.firebase.messaging.FirebaseMessaging.getInstance().token
+                .addOnSuccessListener { token ->
+                    if (!token.isNullOrBlank()) {
+                        val prefs = com.orcuspay.dakpion.util.DakpionPreference(this)
+                        if (prefs.getPushToken() != token) {
+                            prefs.setPushToken(token)
+                            Diag.log("push: token registered")
+                        }
+                    }
+                }
+                .addOnFailureListener { e -> Diag.log("push: token fetch failed ${e.message}") }
+        } catch (e: Exception) {
+            Diag.log("push: unavailable (${e.javaClass.simpleName})")
+        }
     }
 
     companion object {
