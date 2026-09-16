@@ -13,9 +13,13 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <!-- Keep-alive service: keeps the process alive so the SMS receiver fires
-         on phones whose OEM battery manager force-stops background apps. -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+         on phones whose OEM battery manager force-stops background apps.
+         Type remoteMessaging = "transferring text messages to another device",
+         which is exactly what Dakpion does (no Play special-use declaration). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Short partial wake lock while an SMS upload is in flight. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <!-- Direct "allow Dakpion to run unrestricted" prompt from the Device tab.
          Core function (payment SMS forwarding) breaks without it. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
@@ -120,11 +124,7 @@
             android:name=".SmsKeepAliveService"
             android:exported="false"
             android:stopWithTask="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Keeps the SMS receiver alive so incoming mobile-banking payment SMS (bKash, Nagad, Rocket) are forwarded to the merchant's OrcusPay dashboard in real time for payment verification." />
-        </service>
+            android:foregroundServiceType="remoteMessaging" />
 
         <!-- Declare the type for WorkManager's foreground service (used only
              for expedited work on Android 8–11); required on Android 14+. -->

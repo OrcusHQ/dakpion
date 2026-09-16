@@ -38,8 +38,8 @@ import java.io.PrintWriter
  * receiver fires the moment a payment SMS lands.
  *
  * Started from MainActivity (app open), on boot, and after the app is
- * updated. Declared as `specialUse` (targetSdk 34+ needs a type; specialUse
- * has no runtime time-limit and may be started from those broadcasts).
+ * updated. Declared as `remoteMessaging` (targetSdk 34+ needs a type; this
+ * one has no runtime time-limit and may be started from those broadcasts).
  */
 class SmsKeepAliveService : Service() {
 
@@ -98,8 +98,11 @@ class SmsKeepAliveService : Service() {
     private fun promote() {
         try {
             val notification = NotificationHelper(applicationContext).buildKeepAliveNotification()
+            // remoteMessaging: Android's type for "transferring text messages to
+            // another device" — a precise fit, no time limit on Android 15+,
+            // allowed from boot/update broadcasts, no Play declaration form.
             val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
             } else {
                 0
             }

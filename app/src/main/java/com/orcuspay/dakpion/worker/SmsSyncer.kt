@@ -66,6 +66,27 @@ class SmsSyncer @Inject constructor(
      * (or DEFAULT) are used. The periodic sync runs the full version.
      */
     suspend fun sync(fast: Boolean = false): Outcome = mutex.withLock {
+        // Hold the CPU for the duration of the sync so a doze/sleep transition
+        // can't suspend an upload halfway (the receiver and FCM paths already
+        // hold a system wake lock; the inbox-observer path does not).
+        val wakeLock = try {
+            (application.getSystemService(android.content.Context.POWER_SERVICE) as? android.os.PowerManager)
+                ?.newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "dakpion:sync")
+                ?.apply { setReferenceCounted(false); acquire(WAKE_LOCK_TIMEOUT_MS) }
+        } catch (_: Exception) {
+            null
+        }
+        try {
+            syncLocked(fast)
+        } finally {
+            try {
+                if (wakeLock?.isHeld == true) wakeLock.release()
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private suspend fun syncLocked(fast: Boolean): Outcome {
         try {
             val syncStartedAt = Date()
             Diag.log("sync: start fast=$fast")
@@ -162,16 +183,18 @@ class SmsSyncer @Inject constructor(
             }
 
             Diag.log("sync: done sent=$successCount error=$hasError")
-            if (hasError) Outcome.RETRY else Outcome.SUCCESS
+            return if (hasError) Outcome.RETRY else Outcome.SUCCESS
         } catch (e: Exception) {
             Diag.log("sync: threw ${e.javaClass.simpleName}: ${e.message}")
-            Outcome.RETRY
+            return Outcome.RETRY
         }
     }
 
     companion object {
         private const val SCAN_LOOKBACK_MS = 24L * 60L * 60L * 1000L
         private const val FAST_LOOKBACK_MS = 30L * 60L * 1000L
+        // Upper bound for the sync wake lock; a normal sync takes 1–5 s.
+        private const val WAKE_LOCK_TIMEOUT_MS = 60_000L
         // Stop retrying an SMS once it is this old, so a permanently-failing
         // message never hammers the API forever — but never before then.
         private const val MAX_RETRY_AGE_MS = 48L * 60L * 60L * 1000L
