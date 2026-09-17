@@ -17,3 +17,6 @@ key.properties
 *.jks
 /app/releaselocal.properties
 app/google-services.json
+
+# Built APKs/AABs are distributed out-of-band (with a .sha256), never committed
+dist/
