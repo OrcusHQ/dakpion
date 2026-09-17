@@ -1,8 +1,11 @@
 package com.orcuspay.dakpion.presentation.screens.container
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
+import com.orcuspay.dakpion.presentation.composables.UpdateBanner
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -35,8 +38,11 @@ fun ContainerScreen(
             )
         }
     ) {
-        Box(modifier = Modifier.padding(it)) {
-            Navigation(navController, navigator)
+        Column(modifier = Modifier.padding(it).fillMaxSize()) {
+            UpdateBanner()
+            Box(modifier = Modifier.weight(1f)) {
+                Navigation(navController, navigator)
+            }
         }
     }
 }
