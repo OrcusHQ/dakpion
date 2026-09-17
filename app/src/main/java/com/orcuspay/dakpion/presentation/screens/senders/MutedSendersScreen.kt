@@ -21,6 +21,7 @@ import com.orcuspay.dakpion.presentation.composables.TopBar
 import com.orcuspay.dakpion.presentation.theme.PrimaryColor
 import com.orcuspay.dakpion.presentation.theme.interFontFamily
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
 // Friendly labels for well-known sender keys. Any sender not listed here
 // (e.g. a merchant's Bangla QR bank) is shown by its raw name.
@@ -44,13 +45,18 @@ private fun labelFor(sender: String): String =
 @Destination
 @Composable
 fun MutedSendersScreen(
+    navigator: DestinationsNavigator,
     viewModel: MutedSendersViewModel = hiltViewModel(),
 ) {
     val disabled = viewModel.disabled
     val senders = viewModel.senders
 
     Scaffold(
-        topBar = { TopBar(title = "SMS Senders") },
+        topBar = {
+            TopBar(title = "SMS Senders", showBackButton = true) {
+                navigator.navigateUp()
+            }
+        },
         backgroundColor = MaterialTheme.colors.background,
     ) { pv ->
         LazyColumn(
