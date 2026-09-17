@@ -3,11 +3,18 @@ package com.orcuspay.dakpion.presentation.screens.device
 import android.Manifest
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -207,136 +214,183 @@ private fun BackgroundProtectionCard(
     onOpenBattery: () -> Unit,
 ) {
     val attention = status.needsAttention
-    val titleColor = if (attention) WarningText else SuccessText
-    val bodyColor = if (attention) WarningText.copy(alpha = 0.82f) else SuccessText.copy(alpha = 0.82f)
+    val fixCount = (if (status.batteryOptimized) 1 else 0) +
+        (if (status.backgroundRestricted) 1 else 0) +
+        (if (!status.keepAliveRunning) 1 else 0)
+    val accent = if (attention) WarningText else SuccessText
+    val accentBg = if (attention) WarningBg else SuccessBg
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         elevation = 0.dp,
-        backgroundColor = if (attention) WarningBg else SuccessBg,
-        border = BorderStroke(1.dp, titleColor.copy(alpha = 0.12f)),
+        backgroundColor = Color.White,
+        border = BorderStroke(1.dp, BorderColor),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = if (attention) "Background protection needed" else "Background protection OK",
-                fontFamily = interFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = titleColor,
-            )
-            Gap(height = 6.dp)
-            Text(
-                text = if (status.oem != BackgroundProtection.Oem.OTHER) {
-                    "${status.oem.label} phones stop background apps unless these are set. Without them, payments are only detected when you open Dakpion."
-                } else {
-                    "Payment SMS must sync even when Dakpion is closed. Keep these settings on."
-                },
-                fontFamily = interFontFamily,
-                fontSize = 14.sp,
-                color = bodyColor,
-                lineHeight = 20.sp,
-            )
-            Gap(height = 12.dp)
-
-            ProtectionRow(
-                label = "Background service",
-                value = if (status.keepAliveRunning) "Running" else "Not running — reopen the app",
-                ok = status.keepAliveRunning,
-            )
-            ProtectionRow(
-                label = "Battery",
-                value = if (status.batteryOptimized) "Optimized — tap Battery settings" else "Unrestricted",
-                ok = !status.batteryOptimized,
-            )
-            ProtectionRow(
-                label = "Background activity",
-                value = if (status.backgroundRestricted) "Restricted — allow it" else "Allowed",
-                ok = !status.backgroundRestricted,
-            )
-            Gap(height = 10.dp)
-            BackgroundProtection.steps(status.oem).forEachIndexed { index, step ->
-                Row(modifier = Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.Top) {
+            // Header: one shield + a plain-language status line.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .background(accentBg, RoundedCornerShape(11.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = if (attention) Icons.Default.Warning else Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = accent,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                Gap(width = 12.dp)
+                Column {
                     Text(
-                        text = "${index + 1}.",
-                        modifier = Modifier.width(20.dp),
+                        text = "Phone protection",
                         fontFamily = interFontFamily,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = titleColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = TextPrimary,
                     )
                     Text(
-                        text = step,
+                        text = when {
+                            !attention -> "Active — payments sync even when closed"
+                            fixCount == 1 -> "1 thing to fix"
+                            else -> "$fixCount things to fix"
+                        },
                         fontFamily = interFontFamily,
-                        fontSize = 13.sp,
-                        color = bodyColor,
-                        lineHeight = 19.sp,
+                        fontSize = 12.sp,
+                        color = accent,
                     )
                 }
             }
 
             Gap(height = 12.dp)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (status.hasAutostartManager) {
-                    ProtectionButton(text = "Open Autostart", color = titleColor, onClick = onOpenAutostart)
-                }
-                ProtectionButton(text = "Battery settings", color = titleColor, onClick = onOpenBattery)
+            Divider(color = BorderColor)
+            Gap(height = 4.dp)
+
+            ProtectionCheck(
+                label = "Running in the background",
+                ok = status.keepAliveRunning,
+                problemHint = "Reopen Dakpion to restart it",
+            )
+            ProtectionCheck(
+                label = "Battery won't stop it",
+                ok = !status.batteryOptimized,
+                problemHint = "Battery saver is limiting Dakpion",
+                fixLabel = "Fix",
+                onFix = onOpenBattery,
+            )
+            ProtectionCheck(
+                label = "Allowed to run in the background",
+                ok = !status.backgroundRestricted,
+                problemHint = "Background activity is restricted",
+                fixLabel = "Fix",
+                onFix = onOpenBattery,
+            )
+            if (status.hasAutostartManager) {
+                ProtectionCheck(
+                    label = "Auto-start after restart",
+                    ok = true,
+                    neutral = true,
+                    fixLabel = "Open",
+                    onFix = onOpenAutostart,
+                )
             }
         }
     }
 }
 
+/**
+ * One protection check row: a status pill (green tick / amber warning, or a
+ * neutral chevron for actions whose state we can't detect like OEM auto-start),
+ * a plain-language label, and — only when it needs attention — an inline action
+ * that deep-links to the exact settings screen.
+ */
 @Composable
-private fun ProtectionRow(label: String, value: String, ok: Boolean) {
+private fun ProtectionCheck(
+    label: String,
+    ok: Boolean,
+    problemHint: String? = null,
+    fixLabel: String? = null,
+    onFix: (() -> Unit)? = null,
+    neutral: Boolean = false,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = label,
-            modifier = Modifier.weight(0.4f),
-            fontFamily = interFontFamily,
-            fontSize = 13.sp,
-            color = TextSecondary,
-        )
-        Row(modifier = Modifier.weight(0.6f), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .background(if (ok) PrimaryColor else WarningText, RoundedCornerShape(4.dp))
-            )
-            Gap(width = 8.dp)
-            Text(
-                text = value,
-                fontFamily = interFontFamily,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp,
-                color = TextPrimary,
+        val icon = when {
+            neutral -> Icons.Default.KeyboardArrowRight
+            ok -> Icons.Default.Check
+            else -> Icons.Default.Warning
+        }
+        val iconTint = when {
+            neutral -> TextSecondary
+            ok -> SuccessText
+            else -> WarningText
+        }
+        val iconBg = when {
+            neutral -> BorderColor
+            ok -> SuccessBg
+            else -> WarningBg
+        }
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .background(iconBg, RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(15.dp),
             )
         }
-    }
-}
-
-@Composable
-private fun ProtectionButton(text: String, color: Color, onClick: () -> Unit) {
-    OutlinedButton(
-        onClick = onClick,
-        shape = RoundedCornerShape(999.dp),
-        colors = ButtonDefaults.outlinedButtonColors(
-            backgroundColor = Color.Transparent,
-            contentColor = color,
-        ),
-        border = BorderStroke(1.dp, color.copy(alpha = 0.35f)),
-    ) {
-        Text(
-            text = text,
-            fontFamily = interFontFamily,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 13.sp,
-        )
+        Gap(width = 10.dp)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                fontFamily = interFontFamily,
+                fontSize = 14.sp,
+                color = TextPrimary,
+            )
+            if (!ok && !neutral && problemHint != null) {
+                Text(
+                    text = problemHint,
+                    fontFamily = interFontFamily,
+                    fontSize = 12.sp,
+                    color = TextSecondary,
+                    lineHeight = 16.sp,
+                )
+            }
+        }
+        if (onFix != null && (neutral || !ok)) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(999.dp))
+                    .then(
+                        if (neutral) Modifier.border(
+                            1.dp,
+                            BorderColor,
+                            RoundedCornerShape(999.dp),
+                        ) else Modifier.background(PrimaryColor)
+                    )
+                    .clickable { onFix() }
+                    .padding(horizontal = 14.dp, vertical = 7.dp),
+            ) {
+                Text(
+                    text = fixLabel ?: "Fix",
+                    fontFamily = interFontFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    color = if (neutral) TextSecondary else Color.White,
+                )
+            }
+        }
     }
 }
 
